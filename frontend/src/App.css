@@ -6,15 +6,19 @@
   --color-background: #ffffff;
   --color-text: #333;
   --color-text-muted: #555;
+  --color-text-light: #666;
   --color-border: #d0d0d0;
   --color-border-hover: #aaa;
   --color-hover-bg: #f0f0f0;
 
   --border-radius: 6px;
   --icon-button-size: 36px;
+  --input-padding: 8px 10px;
   --btn-padding: 8px 16px;
+  --spacing-sm: 4px;
   --spacing-md: 8px;
 
+  --font-size-sm: 13px;
   --font-size-md: 14px;
   --font-size-lg: 16px;
 
@@ -25,6 +29,10 @@
   width: 100vw;
   height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  max-width: 300px;
+  margin: 0 auto;
 }
