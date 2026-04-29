@@ -1,0 +1,30 @@
+:root {
+  --color-primary: #4a90d9;
+  --color-primary-hover: #3a7bc8;
+  --color-secondary: #e8e8e8;
+  --color-secondary-hover: #d8d8d8;
+  --color-background: #ffffff;
+  --color-text: #333;
+  --color-text-muted: #555;
+  --color-border: #d0d0d0;
+  --color-border-hover: #aaa;
+  --color-hover-bg: #f0f0f0;
+
+  --border-radius: 6px;
+  --icon-button-size: 36px;
+  --btn-padding: 8px 16px;
+  --spacing-md: 8px;
+
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+
+  --transition-fast: 0.15s;
+}
+
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
