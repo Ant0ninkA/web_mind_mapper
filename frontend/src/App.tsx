@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
-import TextInput from './components/TextInput';
-import SelectInput from './components/SelectInput';
+import AddNodeForm from './components/AddNodeForm';
+import AddEdgeForm from './components/AddEdgeForm';
+import type { Node } from '@xyflow/react';
 import './App.css';
 
-const sampleOptions = [
-  { value: 'option1', label: 'Option 1' },
-  { value: 'option2', label: 'Option 2' },
-  { value: 'option3', label: 'Option 3' },
+const sampleNodes: Node[] = [
+  { id: '1', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
+  { id: '2', position: { x: 0, y: 0 }, data: { label: 'Node 2' } },
+  { id: '3', position: { x: 0, y: 0 }, data: { label: 'Node 3' } },
 ];
 
 const App: React.FC = () => {
-  const [text, setText] = useState('');
-  const [selected, setSelected] = useState('');
+  const [nodes, setNodes] = useState<Node[]>(sampleNodes);
+
+  const handleAddNode = (label: string) => {
+    const id = String(nodes.length + 1);
+    setNodes((prev) => [...prev, { id, position: { x: 0, y: 0 }, data: { label } }]);
+  };
+
+  const handleAddEdge = (sourceId: string, targetId: string) => {
+    console.log(`Edge added: ${sourceId} -> ${targetId}`);
+  };
 
   return (
     <div className="app">
-      <TextInput label="Text Input" value={text} onChange={setText} placeholder="Enter text" />
-      <SelectInput
-        label="Dropdown"
-        value={selected}
-        onChange={setSelected}
-        options={sampleOptions}
-        placeholder="Select an option"
-      />
+      <AddNodeForm onAddNode={handleAddNode} />
+      <AddEdgeForm nodes={nodes} onAddEdge={handleAddEdge} />
     </div>
   );
 };
