@@ -21,3 +21,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# drafts
+/src/_drafts
+/src/_drafts2
+*.full

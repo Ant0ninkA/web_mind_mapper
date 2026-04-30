@@ -8,8 +8,10 @@
   --color-text-muted: #555;
   --color-text-light: #666;
   --color-border: #d0d0d0;
+  --color-border-light: #e0e0e0;
   --color-border-hover: #aaa;
   --color-hover-bg: #f0f0f0;
+  --color-shadow: rgba(0, 0, 0, 0.15);
 
   --border-radius: 6px;
   --icon-button-size: 36px;
@@ -17,23 +19,22 @@
   --btn-padding: 8px 16px;
   --spacing-sm: 4px;
   --spacing-md: 8px;
+  --spacing-lg: 16px;
   --spacing-xl: 20px;
 
   --font-size-sm: 13px;
   --font-size-md: 14px;
   --font-size-lg: 16px;
+  --font-size-xl: 18px;
 
   --transition-fast: 0.15s;
+  --transition-normal: 0.3s ease;
 }
 
 .app {
   width: 100vw;
   height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  max-width: 300px;
-  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
 }
