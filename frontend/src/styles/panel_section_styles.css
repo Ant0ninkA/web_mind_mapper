@@ -1,0 +1,12 @@
+.panel-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.panel-section__title {
+  margin: 0 0 12px 0;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
