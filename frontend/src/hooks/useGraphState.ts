@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import type { Node, Edge } from '@xyflow/react';
+import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
+import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from 'reactflow';
 
 const initialNodes: Node[] = [
   { id: '1', position: { x: 250, y: 50 }, data: { label: 'Node 1' } },
@@ -17,6 +18,21 @@ let nodeIdCounter = 4;
 export function useGraphState() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
+
+  const onNodesChange: OnNodesChange = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  const onEdgesChange: OnEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    []
+  );
 
   const addNode = useCallback((label: string) => {
     const id = String(nodeIdCounter++);
@@ -45,10 +61,30 @@ export function useGraphState() {
     });
   }, []);
 
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
+      setNodes((nds) => nds.filter((node) => !deleted.find((d) => d.id === node.id)));
+      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.source || d.id === edge.target)));
+    },
+    [setNodes, setEdges]
+  );
+
+  const onEdgesDelete = useCallback(
+    (deleted: Edge[]) => {
+      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.id)));
+    },
+    [setEdges]
+  );
+
   return {
     nodes,
     edges,
     addNode,
     addEdgeByIds,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onNodesDelete,
+    onEdgesDelete
   };
 }

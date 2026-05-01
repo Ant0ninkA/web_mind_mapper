@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Node } from '@xyflow/react';
+import type { Node } from 'reactflow';
 import SelectInput from './SelectInput';
 import Button from './Button';
 import PanelSection from './PanelSection';
