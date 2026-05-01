@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import ReactFlow, { Background, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -10,32 +10,16 @@ import './App.css';
 
 const App: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(true);
-  const { nodes, edges, addNode, addEdgeByIds } = useGraphState();
-
-  const formattedNodes = useMemo(() =>
-    nodes.map((n: any) => ({
-      id: n.id,
-      data: { label: n.label || 'no name' },
-      position: n.position || { x: Math.random() * 400, y: Math.random() * 400 },
-    })),
-  [nodes]);
-
-  const formattedEdges = useMemo(() =>
-    edges.map((e: any) => ({
-      id: `e${e.source}-${e.target}`,
-      source: e.source,
-      target: e.target,
-      animated: true,
-      style: { stroke: '#3b82f6' },
-    })),
-  [edges]);
+  const { nodes, edges, onNodesChange, onEdgesChange, addNode, addEdgeByIds } = useGraphState();
 
   return (
     <div className="app">
       <div className="graph-container" style={{ flexGrow: 1, height: '100%' }}>
         <ReactFlow
-          nodes={formattedNodes}
-          edges={formattedEdges}
+          nodes={nodes as any[]}
+          edges={edges as any[]}
+          onNodesChange={onNodesChange as any}
+          onEdgesChange={onEdgesChange as any}
           fitView
         >
           <Background />
@@ -50,7 +34,7 @@ const App: React.FC = () => {
         side="right"
       >
         <AddNodeForm onAddNode={addNode} />
-        <AddEdgeForm nodes={nodes} onAddEdge={addEdgeByIds} />
+        <AddEdgeForm nodes={nodes}  onAddEdge={addEdgeByIds} />
       </SideDrawer>
     </div>
   );
