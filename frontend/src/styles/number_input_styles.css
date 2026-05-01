@@ -1,0 +1,31 @@
+.number-input {
+  margin-bottom: var(--spacing-md);
+}
+
+.number-input__label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-sm);
+}
+
+.number-input__unit {
+  color: var(--color-text-muted);
+  margin-left: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.number-input__field {
+  width: 100%;
+  padding: var(--input-padding);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-md);
+  outline: none;
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.number-input__field:focus {
+  border-color: var(--color-primary);
+}
