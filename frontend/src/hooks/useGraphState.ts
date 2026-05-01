@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { applyNodeChanges, applyEdgeChanges } from 'reactflow';
-import type { Node, Edge, OnNodesChange, OnEdgesChange } from 'reactflow';
+import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
+import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from 'reactflow';
 
 const initialNodes: Node[] = [
   { id: '1', position: { x: 250, y: 50 }, data: { label: 'Node 1' } },
@@ -26,6 +26,11 @@ export function useGraphState() {
 
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     []
   );
 
@@ -62,6 +67,7 @@ export function useGraphState() {
     addNode,
     addEdgeByIds,
     onNodesChange,
-    onEdgesChange
+    onEdgesChange,
+    onConnect
   };
 }

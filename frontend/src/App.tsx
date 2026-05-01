@@ -10,16 +10,17 @@ import './App.css';
 
 const App: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(true);
-  const { nodes, edges, onNodesChange, onEdgesChange, addNode, addEdgeByIds } = useGraphState();
+  const { nodes, edges, onNodesChange, onEdgesChange, addNode, addEdgeByIds, onConnect } = useGraphState();
 
   return (
     <div className="app">
       <div className="graph-container" style={{ flexGrow: 1, height: '100%' }}>
         <ReactFlow
-          nodes={nodes as any[]}
-          edges={edges as any[]}
-          onNodesChange={onNodesChange as any}
-          onEdgesChange={onEdgesChange as any}
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
           fitView
         >
           <Background />
