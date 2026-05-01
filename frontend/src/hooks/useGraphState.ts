@@ -61,6 +61,21 @@ export function useGraphState() {
     });
   }, []);
 
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
+      setNodes((nds) => nds.filter((node) => !deleted.find((d) => d.id === node.id)));
+      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.source || d.id === edge.target)));
+    },
+    [setNodes, setEdges]
+  );
+
+  const onEdgesDelete = useCallback(
+    (deleted: Edge[]) => {
+      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.id)));
+    },
+    [setEdges]
+  );
+
   return {
     nodes,
     edges,
@@ -68,6 +83,8 @@ export function useGraphState() {
     addEdgeByIds,
     onNodesChange,
     onEdgesChange,
-    onConnect
+    onConnect,
+    onNodesDelete,
+    onEdgesDelete
   };
 }

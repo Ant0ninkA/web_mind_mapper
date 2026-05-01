@@ -10,7 +10,15 @@ import './App.css';
 
 const App: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(true);
-  const { nodes, edges, onNodesChange, onEdgesChange, addNode, addEdgeByIds, onConnect } = useGraphState();
+  const { nodes, 
+          edges, 
+          onNodesChange, 
+          onEdgesChange, 
+          addNode, 
+          addEdgeByIds, 
+          onConnect,
+          onNodesDelete,
+          onEdgesDelete } = useGraphState();
 
   return (
     <div className="app">
@@ -21,6 +29,9 @@ const App: React.FC = () => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodesDelete={onNodesDelete}
+          onEdgesDelete={onEdgesDelete}
+          deleteKeyCode={['Delete', 'Backspace']}
           fitView
         >
           <Background />
