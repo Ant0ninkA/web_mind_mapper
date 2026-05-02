@@ -51,6 +51,34 @@ export function useGraphState() {
     });
   }, []);
 
+  const updateNodeStyle = useCallback((nodeId: string, newStyle: Record<string, unknown>) => {
+    setNodes((nds) =>
+      nds.map((node): Node => {
+        if (node.id !== nodeId) return node;
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            label: (newStyle.labelText as string) ?? node.data.label,
+          },
+          style: {
+            backgroundColor: newStyle.backgroundColor as string,
+            color: newStyle.textColor as string,
+            borderColor: newStyle.borderColor as string,
+            borderWidth: `${newStyle.borderWidth}px`,
+            borderStyle: newStyle.borderStyle as string,
+            borderRadius: `${newStyle.borderRadius}px`,
+            fontSize: `${newStyle.fontSize}px`,
+            fontFamily: newStyle.fontFamily as string,
+            fontWeight: newStyle.fontWeight as string,
+            textAlign: newStyle.textAlign as React.CSSProperties['textAlign'],
+            opacity: newStyle.opacity as number,
+          },
+        };
+      })
+    );
+  }, []);
+
   const addEdgeByIds = useCallback((sourceId: string, targetId: string) => {
     const id = `e${sourceId}-${targetId}`;
     const newEdge: Edge = { id, source: sourceId, target: targetId };
@@ -85,6 +113,7 @@ export function useGraphState() {
     onEdgesChange,
     onConnect,
     onNodesDelete,
-    onEdgesDelete
+    onEdgesDelete,
+    updateNodeStyle,
   };
 }

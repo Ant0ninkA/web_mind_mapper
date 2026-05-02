@@ -154,3 +154,5 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onAp
         </div>
         );
 };
+
+export default StyleEditor;

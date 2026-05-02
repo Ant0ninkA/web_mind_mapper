@@ -15,7 +15,7 @@ export interface ElementStyle {
     opacity: number;
 }
 
-const defaultStyle: ElementStyle = {
+export const defaultStyle: ElementStyle = {
     labelText: '',
     fontFamily: 'Arial, sans-serif',
     fontSize: 14,
