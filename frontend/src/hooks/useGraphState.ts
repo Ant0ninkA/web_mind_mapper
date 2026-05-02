@@ -59,7 +59,7 @@ export function useGraphState() {
           ...node,
           data: {
             ...node.data,
-            label: (newStyle.labelText as string) ?? node.data.label,
+            label: (newStyle.labelText as string) || node.data.label,
           },
           style: {
             backgroundColor: newStyle.backgroundColor as string,

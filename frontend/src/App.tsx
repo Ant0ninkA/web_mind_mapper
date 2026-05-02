@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'; 
 import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler } from 'reactflow';
 import 'reactflow/dist/style.css';
-
+import { defaultStyle } from './hooks/useElementStyle';
 import SideDrawer from './components/SideDrawer';
 import AddNodeForm from './components/AddNodeForm';
 import AddEdgeForm from './components/AddEdgeForm';
@@ -43,6 +43,10 @@ const App: React.FC = () => {
     updateNodeStyle(elementId, style as unknown as Record<string, unknown>);
   }, [updateNodeStyle]);
 
+  const handleResetStyle = useCallback((elementId: string) => {
+    updateNodeStyle(elementId, defaultStyle as unknown as Record<string, unknown>);
+  }, [updateNodeStyle]);
+
   const selectedInitialStyle = selectedNode
     ? {
         labelText: selectedNode.data.label as string,
@@ -71,6 +75,7 @@ const App: React.FC = () => {
             elementId={selectedNode.id}
             initialStyle={selectedInitialStyle}
             onApply={handleApplyStyle}
+            onReset={handleResetStyle}
           />
         ) : (
           <p style={{ padding: '20px' }}>Click a node to edit its style.</p>

@@ -44,13 +44,19 @@ interface StyleEditorProps {
     elementId: string;
     initialStyle?: Partial<ElementStyle>;
     onApply: (elementId: string, style: ElementStyle)=> void;
+    onReset?: (elementId: string) => void;
 }
 
-const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onApply }) => {
+const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onApply, onReset }) => {
     const { style, updateStyle, resetStyle } = useElementStyle(initialStyle);
 
     const handleApply = () => {
         onApply(elementId, style);
+    };
+
+    const handleReset = () => {
+        resetStyle();
+        if(onReset) onReset(elementId);
     };
 
     return (
@@ -149,7 +155,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onAp
              
             <div className="style-editor__actions">
                 <Button onClick={handleApply} variant="primary">Apply Style</Button>
-                <Button onClick={resetStyle} variant="secondary">Reset</Button>
+                <Button onClick={handleReset} variant="secondary">Reset</Button>
             </div>
         </div>
         );
