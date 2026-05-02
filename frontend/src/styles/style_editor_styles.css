@@ -1,0 +1,10 @@
+.style-editor {
+  padding: var(--spacing-lg);
+}
+
+.style-editor__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
