@@ -1,0 +1,101 @@
+{
+  "$comment": "Canonical $jsonSchema for the 'mindmaps' collection. Source of truth for the document shape — kept in sync with init/01-create-collection.js. Uses BSON types so the same schema can be applied as a MongoDB collection validator.",
+  "bsonType": "object",
+  "required": ["id", "name", "nodes", "edges", "createdAt", "updatedAt"],
+  "additionalProperties": true,
+  "properties": {
+    "_id": {
+      "$comment": "Mongo's automatic ObjectId. Always present, separate from our application-level 'id'."
+    },
+    "id": {
+      "bsonType": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description": "Application-level UUID. The server queries by this field, not by _id."
+    },
+    "name": {
+      "bsonType": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Human-readable name of the mindmap."
+    },
+    "createdAt": {
+      "bsonType": "date",
+      "description": "Set on insert, never modified."
+    },
+    "updatedAt": {
+      "bsonType": "date",
+      "description": "Refreshed on every update."
+    },
+    "nodes": {
+      "bsonType": "array",
+      "description": "React Flow node objects, embedded directly so the whole mindmap loads in one read.",
+      "items": {
+        "bsonType": "object",
+        "required": ["id", "position", "data"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "bsonType": "string", "minLength": 1 },
+          "type": { "bsonType": "string" },
+          "position": {
+            "bsonType": "object",
+            "required": ["x", "y"],
+            "additionalProperties": true,
+            "properties": {
+              "x": { "bsonType": ["double", "int", "long"] },
+              "y": { "bsonType": ["double", "int", "long"] }
+            }
+          },
+          "data": {
+            "bsonType": "object",
+            "required": ["label"],
+            "additionalProperties": true,
+            "properties": {
+              "label": { "bsonType": "string" }
+            }
+          },
+          "style": {
+            "bsonType": "object",
+            "additionalProperties": true,
+            "description": "Optional CSS-like style block. Type-checked when present, but not required.",
+            "properties": {
+              "backgroundColor": { "bsonType": "string" },
+              "color": { "bsonType": "string" },
+              "borderColor": { "bsonType": "string" },
+              "borderWidth": { "bsonType": ["int", "double", "long", "string"] },
+              "borderStyle": { "bsonType": "string" },
+              "borderRadius": { "bsonType": ["int", "double", "long", "string"] },
+              "fontSize": { "bsonType": ["int", "double", "long", "string"] },
+              "fontFamily": { "bsonType": "string" },
+              "fontWeight": { "bsonType": ["int", "string"] },
+              "textAlign": { "enum": ["left", "center", "right", "justify"] },
+              "opacity": { "bsonType": ["double", "int"], "minimum": 0, "maximum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "edges": {
+      "bsonType": "array",
+      "description": "React Flow edge objects, embedded directly.",
+      "items": {
+        "bsonType": "object",
+        "required": ["id", "source", "target"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "bsonType": "string", "minLength": 1 },
+          "source": { "bsonType": "string", "minLength": 1 },
+          "target": { "bsonType": "string", "minLength": 1 },
+          "sourceHandle": { "bsonType": ["string", "null"] },
+          "targetHandle": { "bsonType": ["string", "null"] },
+          "type": { "bsonType": "string" },
+          "label": { "bsonType": "string" },
+          "animated": { "bsonType": "bool" },
+          "style": {
+            "bsonType": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}
