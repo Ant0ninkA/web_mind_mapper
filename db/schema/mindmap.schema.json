@@ -1,34 +1,22 @@
 {
-  "$comment": "Canonical $jsonSchema for the 'mindmaps' collection. Source of truth for the document shape — kept in sync with init/01-create-collection.js. Uses BSON types so the same schema can be applied as a MongoDB collection validator.",
   "bsonType": "object",
   "required": ["id", "name", "nodes", "edges", "createdAt", "updatedAt"],
   "additionalProperties": true,
   "properties": {
-    "_id": {
-      "$comment": "Mongo's automatic ObjectId. Always present, separate from our application-level 'id'."
-    },
+    "_id": {},
     "id": {
       "bsonType": "string",
-      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-      "description": "Application-level UUID. The server queries by this field, not by _id."
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     },
     "name": {
       "bsonType": "string",
       "minLength": 1,
-      "maxLength": 200,
-      "description": "Human-readable name of the mindmap."
+      "maxLength": 200
     },
-    "createdAt": {
-      "bsonType": "date",
-      "description": "Set on insert, never modified."
-    },
-    "updatedAt": {
-      "bsonType": "date",
-      "description": "Refreshed on every update."
-    },
+    "createdAt": { "bsonType": "date" },
+    "updatedAt": { "bsonType": "date" },
     "nodes": {
       "bsonType": "array",
-      "description": "React Flow node objects, embedded directly so the whole mindmap loads in one read.",
       "items": {
         "bsonType": "object",
         "required": ["id", "position", "data"],
@@ -56,7 +44,6 @@
           "style": {
             "bsonType": "object",
             "additionalProperties": true,
-            "description": "Optional CSS-like style block. Type-checked when present, but not required.",
             "properties": {
               "backgroundColor": { "bsonType": "string" },
               "color": { "bsonType": "string" },
@@ -76,7 +63,6 @@
     },
     "edges": {
       "bsonType": "array",
-      "description": "React Flow edge objects, embedded directly.",
       "items": {
         "bsonType": "object",
         "required": ["id", "source", "target"],
