@@ -8,18 +8,19 @@ const COLLECTION = 'mindmaps';
 export class MongoMindmapRepository implements IMindmapRepository {
   constructor(private readonly db: Db) {}
 
-  async findAll(): Promise<Mindmap[]> {
-    return this.db.collection<Mindmap>(COLLECTION).find({}).toArray();
+  async findAll(ownerId: string): Promise<Mindmap[]> {
+    return this.db.collection<Mindmap>(COLLECTION).find({ ownerId }).toArray();
   }
 
-  async findById(id: string): Promise<Mindmap | null> {
-    return this.db.collection<Mindmap>(COLLECTION).findOne({ id }) ?? null;
+  async findById(id: string, ownerId: string): Promise<Mindmap | null> {
+    return this.db.collection<Mindmap>(COLLECTION).findOne({ id, ownerId }) ?? null;
   }
 
-  async create(dto: CreateMindmapDto): Promise<Mindmap> {
+  async create(dto: CreateMindmapDto, ownerId: string): Promise<Mindmap> {
     const now = new Date();
     const mindmap: Mindmap = {
       id: uuidv4(),
+      ownerId,
       name: dto.name,
       nodes: dto.nodes ?? [],
       edges: dto.edges ?? [],
@@ -30,7 +31,7 @@ export class MongoMindmapRepository implements IMindmapRepository {
     return mindmap;
   }
 
-  async update(id: string, dto: UpdateMindmapDto): Promise<Mindmap | null> {
+  async update(id: string, ownerId: string, dto: UpdateMindmapDto): Promise<Mindmap | null> {
     const updateFields: Partial<Mindmap> = { updatedAt: new Date() };
     if (dto.name !== undefined) updateFields.name = dto.name;
     if (dto.nodes !== undefined) updateFields.nodes = dto.nodes;
@@ -38,12 +39,12 @@ export class MongoMindmapRepository implements IMindmapRepository {
 
     const result = await this.db
       .collection<Mindmap>(COLLECTION)
-      .findOneAndUpdate({ id }, { $set: updateFields }, { returnDocument: 'after' });
+      .findOneAndUpdate({ id, ownerId }, { $set: updateFields }, { returnDocument: 'after' });
     return result ?? null;
   }
 
-  async delete(id: string): Promise<boolean> {
-    const result = await this.db.collection<Mindmap>(COLLECTION).deleteOne({ id });
+  async delete(id: string, ownerId: string): Promise<boolean> {
+    const result = await this.db.collection<Mindmap>(COLLECTION).deleteOne({ id, ownerId });
     return result.deletedCount === 1;
   }
 }

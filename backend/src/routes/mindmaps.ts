@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { IMindmapRepository } from '../repositories/IMindmapRepository';
+import { requireAuth } from '../auth/middleware';
 
 interface ValidationError {
   field: string;
@@ -70,13 +71,15 @@ function validateMindmapInput(body: unknown, requireName: boolean): ValidationEr
 export function createMindmapRouter(repo: IMindmapRepository): Router {
   const router = Router();
 
-  router.get('/', async (_req: Request, res: Response) => {
-    const mindmaps = await repo.findAll();
+  router.use(requireAuth);
+
+  router.get('/', async (req: Request, res: Response) => {
+    const mindmaps = await repo.findAll(req.user!.id);
     res.json(mindmaps);
   });
 
   router.get('/:id', async (req: Request, res: Response) => {
-    const mindmap = await repo.findById(req.params.id);
+    const mindmap = await repo.findById(req.params.id, req.user!.id);
     if (!mindmap) {
       res.status(404).json({ error: 'Mindmap not found' });
       return;
@@ -91,7 +94,7 @@ export function createMindmapRouter(repo: IMindmapRepository): Router {
       return;
     }
     const { name, nodes, edges } = req.body;
-    const mindmap = await repo.create({ name, nodes, edges });
+    const mindmap = await repo.create({ name, nodes, edges }, req.user!.id);
     res.status(201).json(mindmap);
   });
 
@@ -102,7 +105,7 @@ export function createMindmapRouter(repo: IMindmapRepository): Router {
       return;
     }
     const { name, nodes, edges } = req.body;
-    const updated = await repo.update(req.params.id, { name, nodes, edges });
+    const updated = await repo.update(req.params.id, req.user!.id, { name, nodes, edges });
     if (!updated) {
       res.status(404).json({ error: 'Mindmap not found' });
       return;
@@ -111,7 +114,7 @@ export function createMindmapRouter(repo: IMindmapRepository): Router {
   });
 
   router.delete('/:id', async (req: Request, res: Response) => {
-    const deleted = await repo.delete(req.params.id);
+    const deleted = await repo.delete(req.params.id, req.user!.id);
     if (!deleted) {
       res.status(404).json({ error: 'Mindmap not found' });
       return;

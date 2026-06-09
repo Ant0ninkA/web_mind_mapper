@@ -5,18 +5,20 @@ import { IMindmapRepository } from './IMindmapRepository';
 export class InMemoryMindmapRepository implements IMindmapRepository {
   private store = new Map<string, Mindmap>();
 
-  async findAll(): Promise<Mindmap[]> {
-    return Array.from(this.store.values());
+  async findAll(ownerId: string): Promise<Mindmap[]> {
+    return Array.from(this.store.values()).filter((m) => m.ownerId === ownerId);
   }
 
-  async findById(id: string): Promise<Mindmap | null> {
-    return this.store.get(id) ?? null;
+  async findById(id: string, ownerId: string): Promise<Mindmap | null> {
+    const m = this.store.get(id);
+    return m && m.ownerId === ownerId ? m : null;
   }
 
-  async create(dto: CreateMindmapDto): Promise<Mindmap> {
+  async create(dto: CreateMindmapDto, ownerId: string): Promise<Mindmap> {
     const now = new Date();
     const mindmap: Mindmap = {
       id: uuidv4(),
+      ownerId,
       name: dto.name,
       nodes: dto.nodes ?? [],
       edges: dto.edges ?? [],
@@ -27,9 +29,9 @@ export class InMemoryMindmapRepository implements IMindmapRepository {
     return mindmap;
   }
 
-  async update(id: string, dto: UpdateMindmapDto): Promise<Mindmap | null> {
+  async update(id: string, ownerId: string, dto: UpdateMindmapDto): Promise<Mindmap | null> {
     const existing = this.store.get(id);
-    if (!existing) return null;
+    if (!existing || existing.ownerId !== ownerId) return null;
     const updated: Mindmap = {
       ...existing,
       ...(dto.name !== undefined && { name: dto.name }),
@@ -41,7 +43,9 @@ export class InMemoryMindmapRepository implements IMindmapRepository {
     return updated;
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string, ownerId: string): Promise<boolean> {
+    const m = this.store.get(id);
+    if (!m || m.ownerId !== ownerId) return false;
     return this.store.delete(id);
   }
 }
