@@ -3,14 +3,15 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { createMindmapRouter } from './mindmaps';
 import { InMemoryMindmapRepository } from '../repositories/InMemoryMindmapRepository';
+import { InMemoryShareTokenRepository } from '../repositories/InMemoryShareTokenRepository';
 import { signAuthToken } from '../auth/jwt';
 import { AUTH_COOKIE_NAME } from '../auth/cookie';
 
-function makeApp(repo: InMemoryMindmapRepository) {
+function makeApp(repo: InMemoryMindmapRepository, shareRepo: InMemoryShareTokenRepository) {
   const app = express();
   app.use(express.json());
   app.use(cookieParser());
-  app.use('/mindmaps', createMindmapRouter(repo));
+  app.use('/mindmaps', createMindmapRouter(repo, shareRepo));
   return app;
 }
 
@@ -20,11 +21,13 @@ function authCookie(userId: string): string {
 
 describe('mindmap routes (auth)', () => {
   let repo: InMemoryMindmapRepository;
+  let shareRepo: InMemoryShareTokenRepository;
   let app: express.Express;
 
   beforeEach(() => {
     repo = new InMemoryMindmapRepository();
-    app = makeApp(repo);
+    shareRepo = new InMemoryShareTokenRepository();
+    app = makeApp(repo, shareRepo);
   });
 
   it('GET /mindmaps returns 401 without auth', async () => {
@@ -79,5 +82,49 @@ describe('mindmap routes (auth)', () => {
       .set('Cookie', authCookie('user-A'))
       .send({});
     expect(res.status).toBe(400);
+  });
+
+  describe('POST /mindmaps/:id/share', () => {
+    it('returns 401 without auth', async () => {
+      const m = await repo.create({ name: 'mine' }, 'user-A');
+      const res = await request(app).post(`/mindmaps/${m.id}/share`);
+      expect(res.status).toBe(401);
+    });
+
+    it("returns 404 for another user's mindmap", async () => {
+      const m = await repo.create({ name: 'theirs' }, 'user-B');
+      const res = await request(app)
+        .post(`/mindmaps/${m.id}/share`)
+        .set('Cookie', authCookie('user-A'));
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 for nonexistent mindmap', async () => {
+      const res = await request(app)
+        .post('/mindmaps/nonexistent/share')
+        .set('Cookie', authCookie('user-A'));
+      expect(res.status).toBe(404);
+    });
+
+    it('creates a share token and returns shareUrl', async () => {
+      const m = await repo.create({ name: 'mine' }, 'user-A');
+      const res = await request(app)
+        .post(`/mindmaps/${m.id}/share`)
+        .set('Cookie', authCookie('user-A'));
+      expect(res.status).toBe(201);
+      expect(res.body.shareUrl).toMatch(/^\/shared\/[0-9a-f-]{36}$/);
+    });
+
+    it('is idempotent — returns same token on second call with 200', async () => {
+      const m = await repo.create({ name: 'mine' }, 'user-A');
+      const first = await request(app)
+        .post(`/mindmaps/${m.id}/share`)
+        .set('Cookie', authCookie('user-A'));
+      const second = await request(app)
+        .post(`/mindmaps/${m.id}/share`)
+        .set('Cookie', authCookie('user-A'));
+      expect(second.status).toBe(200);
+      expect(second.body.shareUrl).toBe(first.body.shareUrl);
+    });
   });
 });
