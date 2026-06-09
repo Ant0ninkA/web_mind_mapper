@@ -72,3 +72,5 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     </div>
   );
 };
+
+export default LoginForm

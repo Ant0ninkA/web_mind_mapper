@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { AuthPage } from '../AuthPage'; 
+import { LoginPage } from './LoginPage'; 
 
 const MindmapDashboard: React.FC = () => {
   const { user, loading } = useAuth();
@@ -25,7 +25,7 @@ const MindmapDashboard: React.FC = () => {
   }
 
   if (!user) {
-    return <AuthPage />;
+    return <LoginPage />;
   }
 
   return (
