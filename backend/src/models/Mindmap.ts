@@ -34,6 +34,7 @@ export interface MindmapEdge {
 
 export interface Mindmap {
   id: string;
+  ownerId: string;
   name: string;
   nodes: MindmapNode[];
   edges: MindmapEdge[];
