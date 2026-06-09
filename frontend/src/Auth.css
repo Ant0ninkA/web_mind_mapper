@@ -1,0 +1,66 @@
+.auth-page-container {
+  display: flex;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: #f9fafb;
+}
+
+.auth-sidebar {
+  flex: 1;
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+@media (max-width: 768px) {
+  .auth-sidebar { display: none; }
+}
+
+.sidebar-content h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+.sidebar-content p { font-size: 1.1rem; opacity: 0.9; max-width: 400px; line-height: 1.6; }
+
+.auth-form-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.auth-card h2 { margin-top: 0; font-size: 1.75rem; color: #111827; }
+.auth-subtitle { color: #6b7280; font-size: 0.95rem; margin-bottom: 2rem; }
+
+.form-group { margin-bottom: 1.25rem; }
+.form-group label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem; }
+.form-group input {
+  width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;
+  font-size: 1rem; transition: border-color 0.15s;
+}
+.form-group input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+.auth-btn {
+  width: 100%; padding: 0.75rem; background-color: #4f46e5; color: white; border: none;
+  border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1rem;
+}
+.auth-btn:hover { background-color: #4338ca; }
+.auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.auth-error-banner { background-color: #fef2f2; color: #991b1b; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 1.5rem; border: 1px solid #fee2e2; }
+.auth-error-list { background-color: #fff7ed; color: #c2410c; padding: 0.75rem 1.25rem; border-radius: 6px; font-size: 0.875rem; margin-bottom: 1.5rem; border: 1px solid #ffedd5; }
+.auth-error-list ul { margin: 0.25rem 0 0 0; padding-left: 1.25rem; }
+
+.auth-footer { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: #4b5563; }
+.link-btn { background: none; border: none; color: #4f46e5; font-weight: 600; cursor: pointer; padding: 0; font-size: 0.9rem; }
+.link-btn:hover { text-decoration: underline; }
