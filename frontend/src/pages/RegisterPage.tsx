@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { RegisterForm } from '../components/RegisterForm';
+import { useNavigate } from 'react-router-dom';
 import '../Auth.css';
 
 export const RegisterPage: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
-
+  const navigate = useNavigate();
   return (
     <div className="auth-page-container">
       <div className="auth-sidebar">
@@ -14,7 +14,7 @@ export const RegisterPage: React.FC = () => {
         </div>
       </div>
       <div className="auth-form-wrapper">
-        <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
+        <RegisterForm onSwitchToLogin={() => navigate('/login')} />
       </div>
     </div>
   );
