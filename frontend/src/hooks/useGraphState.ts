@@ -78,13 +78,23 @@ export function useGraphState(initialMindmapId?: string) {
   }, []);
 
   const save = useCallback(async (): Promise<void> => {
-    const id = mindmapIdRef.current;
-    if (!id || !dirtyRef.current) return;
+    if (!dirtyRef.current) return;
     try {
-      await updateMindmap(id, {
-        nodes: toMindmapNodes(nodesRef.current),
-        edges: toMindmapEdges(edgesRef.current),
-      });
+      const id = mindmapIdRef.current;
+      if (id) {
+        await updateMindmap(id, {
+          nodes: toMindmapNodes(nodesRef.current),
+          edges: toMindmapEdges(edgesRef.current),
+        });
+      } else {
+        const mindmap = await createMindmap({
+          name: 'Untitled mindmap',
+          nodes: toMindmapNodes(nodesRef.current),
+          edges: toMindmapEdges(edgesRef.current),
+        });
+        mindmapIdRef.current = mindmap.id;
+        setMindmapId(mindmap.id);
+      }
       dirtyRef.current = false;
       setError(null);
     } catch (err) {
@@ -101,8 +111,13 @@ export function useGraphState(initialMindmapId?: string) {
       try {
         const mindmap = initialMindmapId
           ? await getMindmap(initialMindmapId)
-          : (await listMindmaps())[0] ?? (await createMindmap({ name: 'Untitled mindmap' }));
+          : (await listMindmaps())[0] ?? null;
         if (cancelled) return;
+        if (!mindmap) {
+          mindmapIdRef.current = null;
+          setMindmapId(null);
+          return;
+        }
         const flowNodes = toFlowNodes(mindmap.nodes);
         const flowEdges = toFlowEdges(mindmap.edges);
         nodesRef.current = flowNodes;
