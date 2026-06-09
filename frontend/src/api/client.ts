@@ -7,33 +7,37 @@
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL ?? 'http://localhost:3001';
 
+// Custom API Error class mapping to backend's structural format
 export class ApiError extends Error {
   status: number;
-  body: unknown;
+  details?: string[];
 
-  constructor(status: number, message: string, body: unknown) {
+  constructor(status: number, message: string, details?: string[]) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
-    this.body = body;
+    this.details = details;
   }
 }
 
 interface RequestOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   headers?: Record<string, string>;
 }
 
-async function request<T>(
-  method: string,
+export async function request<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
+  const method = options.method || 'GET';
+  
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
+  // Added credentials: 'include' so cookies automatically travel back and forth
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers,
@@ -41,6 +45,7 @@ async function request<T>(
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
 
+  // Handle HTTP 204 No Content safely (Logout or Password updates)
   if (response.status === 204) {
     return undefined as T;
   }
@@ -49,11 +54,15 @@ async function request<T>(
   const data = text ? JSON.parse(text) : undefined;
 
   if (!response.ok) {
-    const message =
-      (data && typeof data === 'object' && 'error' in data
-        ? String((data as { error: unknown }).error)
-        : response.statusText) || 'Request failed';
-    throw new ApiError(response.status, message, data);
+    let errorMessage = response.statusText || 'Request failed';
+    let errorDetails: string[] | undefined = undefined;
+
+    if (data && typeof data === 'object') {
+      if ('error' in data) errorMessage = String(data.error);
+      if ('details' in data && Array.isArray(data.details)) errorDetails = data.details;
+    }
+
+    throw new ApiError(response.status, errorMessage, errorDetails);
   }
 
   return data as T;
@@ -61,13 +70,17 @@ async function request<T>(
 
 export const api = {
   get: <T>(path: string, options?: RequestOptions) =>
-    request<T>('GET', path, options),
+    request<T>(path, { ...options, method: 'GET' }),
+    
   post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    request<T>('POST', path, { ...options, body }),
+    request<T>(path, { ...options, method: 'POST', body }),
+    
   put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    request<T>('PUT', path, { ...options, body }),
+    request<T>(path, { ...options, method: 'PUT', body }),
+    
   patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    request<T>('PATCH', path, { ...options, body }),
+    request<T>(path, { ...options, method: 'PATCH', body }),
+    
   del: <T>(path: string, options?: RequestOptions) =>
-    request<T>('DELETE', path, options),
+    request<T>(path, { ...options, method: 'DELETE' }),
 };
