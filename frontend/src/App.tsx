@@ -21,6 +21,9 @@ const App: React.FC = () => {
   const {
     nodes,
     edges,
+    mindmapId,
+    loading,
+    error,
     onNodesChange,
     onEdgesChange,
     addNode,
@@ -66,8 +69,45 @@ const App: React.FC = () => {
       }
     : undefined;
 
+  const statusStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    width: '100%',
+  };
+
+  if (loading) {
+    return <div style={statusStyle}>Loading mindmap…</div>;
+  }
+
+  // A load failure (e.g. an unknown id from /map/:id) means there is no graph to
+  // show, so replace the editor. Save errors are handled by the banner below,
+  // which keeps the loaded graph on screen.
+  if (error && !mindmapId) {
+    return <div style={{ ...statusStyle, color: '#b71c1c' }}>{error}</div>;
+  }
+
   return (
     <div className="app">
+      {error && (
+        <div
+          role="alert"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            padding: '8px 16px',
+            textAlign: 'center',
+            background: '#fdecea',
+            color: '#b71c1c',
+          }}
+        >
+          {error}
+        </div>
+      )}
       <SideDrawer
         isOpen={leftDrawerOpen}
         onToggle={() => setLeftDrawerOpen((o) => !o)}
