@@ -42,6 +42,7 @@ const textAlignOptions = [
 
 interface StyleEditorProps {
     elementId: string;
+    elementType: 'node' | 'edge';
     initialStyle?: Partial<ElementStyle>;
     onChange: (elementId: string, style: ElementStyle) => void;
     onReset?: (elementId: string) => void;
@@ -50,7 +51,7 @@ interface StyleEditorProps {
     onSave?: () => Promise<void>;
 }
 
-const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onChange, onReset, onUndo, canUndo = false, onSave }) => {
+const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, elementType, initialStyle, onChange, onReset, onUndo, canUndo = false, onSave }) => {
     const { style, updateStyle, resetStyle } = useElementStyle(initialStyle);
     const [isSaving, setIsSaving] = useState(false);
     // Apply live: push every real style change up to the parent. We emit only
@@ -89,6 +90,55 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onCh
             setIsSaving(false);
         }
     };
+
+    if (elementType === 'edge') {
+        return (
+            <div className="style-editor">
+                <PanelSection title="Edge Label">
+                    <TextInput
+                        label="Text"
+                        value={style.labelText}
+                        onChange={(val) => updateStyle('labelText', val)}
+                        placeholder="Edge label"
+                    />
+                </PanelSection>
+
+                <PanelSection title="Line Style">
+                    <ColorInput
+                        label="Line Color"
+                        value={style.borderColor} // Цвят на реброто
+                        onChange={(val) => updateStyle('borderColor', val)}
+                    />
+                    <NumberInput
+                        label="Line Width"
+                        value={style.borderWidth} // Дебелина на реброто
+                        onChange={(val) => updateStyle('borderWidth', val)}
+                        min={1}
+                        max={15}
+                        unit="px"
+                    />
+                </PanelSection>
+
+                <PanelSection title="Animation">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0' }}>
+                        <label style={{ fontSize: '14px', color: '#555' }}>Animated Flow:</label>
+                        <input 
+                            type="checkbox" 
+                            checked={!!style.animated} 
+                            onChange={(e) => updateStyle('animated', e.target.checked)}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                        />
+                    </div>
+                </PanelSection>
+
+                <div className="style-editor__actions">
+                    <Button onClick={handleUndo} variant="primary" disabled={!canUndo}>Undo</Button>
+                    <Button onClick={handleReset} variant="secondary">Reset</Button>
+                    {onSave && <Button onClick={onSave} variant="primary">Save</Button>}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="style-editor">  

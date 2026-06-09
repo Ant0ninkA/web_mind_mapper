@@ -20,9 +20,7 @@ const AppRoutes: React.FC = () => {
       <Route 
         path="/map" 
         element={
-          <ProtectedRoute>
             <App />
-          </ProtectedRoute>
         } 
       />
       <Route 

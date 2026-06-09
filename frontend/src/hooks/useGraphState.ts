@@ -207,6 +207,24 @@ export function useGraphState(initialMindmapId?: string) {
   [writeNodes]
 );
 
+const updateEdgeStyle = useCallback(
+  (edgeId: string, newStyle: ElementStyle) => {
+    takeSnapshot(); // Запазваме текущото състояние преди промяната за undo
+    const nextEdges = edgesRef.current.map((edge) => {
+      if (edge.id !== edgeId)  return edge;
+      return {
+        ...edge,
+        label: newStyle.labelText || undefined,
+        animation: !!newStyle.animated,
+        style: {
+          stroke: newStyle.borderColor,
+          strokeWidth: newStyle.borderWidth,
+        },
+      };
+    });
+    writeEdges(nextEdges);
+  }, [writeEdges, takeSnapshot]);
+
   const addEdgeByIds = useCallback(
     (sourceId: string, targetId: string) => {
       writeEdges([...edgesRef.current, { id: newId(), source: sourceId, target: targetId }]);
@@ -242,6 +260,7 @@ export function useGraphState(initialMindmapId?: string) {
     onNodesDelete,
     onEdgesDelete,
     updateNodeStyle,
+    updateEdgeStyle,
     mindmapId,
     loading,
     error,

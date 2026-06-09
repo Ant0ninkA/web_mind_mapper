@@ -1,5 +1,6 @@
 import  {useCallback,useState} from "react";
 import type { CSSProperties } from "react";
+import type { Node, Edge } from "reactflow";
 
 export interface ElementStyle {
     labelText: string;
@@ -14,6 +15,7 @@ export interface ElementStyle {
     borderStyle: string;
     borderRadius: number;
     opacity: number;
+    animated?: boolean; 
 }
 
 export const defaultStyle: ElementStyle = {
@@ -29,6 +31,7 @@ export const defaultStyle: ElementStyle = {
     borderStyle: 'solid',
     borderRadius: 6,
     opacity: 1,
+    animated: false,
 };
 
 /** Map the editor's ElementStyle to the CSS object ReactFlow renders on a node. */
@@ -93,4 +96,21 @@ export function useElementStyle(initialStyle?: Partial<ElementStyle>) {
         setStyle({ ...defaultStyle, ...initialStyle});}, [initialStyle]);
 
     return { style, updateStyle, resetStyle };  
+}
+
+export function edgeToElementStyle(edge: Edge): ElementStyle {
+    const s = edge.style ?? {};
+    let width = 2;
+    if (typeof s.strokeWidth === 'number') {
+        width = s.strokeWidth;
+    } else if (typeof s.strokeWidth === 'string') {
+        width = parseFloat(s.strokeWidth)||2;
+    }
+    return {
+        ...defaultStyle,
+        labelText: typeof edge.label === 'string' ? edge.label : '',
+        borderColor: typeof s.stroke === 'string' ? s.stroke : defaultStyle.borderColor,
+        borderWidth: width,
+        animated: !!edge.animated,
+    };
 }

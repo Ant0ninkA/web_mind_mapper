@@ -15,7 +15,7 @@ import { createMindmapRouter } from './routes/mindmaps';
 import { createAuthRouter } from './routes/auth';
 import { createUsersRouter } from './routes/users';
 import { InMemoryShareTokenRepository } from './repositories/InMemoryShareTokenRepository';
-import { MongoShareTokenRepository } from './repositories/MongoShareTokenRepository';
+import { MongoShareTokenRepository } from './repositories/MongoShareTokenRepository'; 
 import { IShareTokenRepository } from './repositories/IShareTokenRepository';
 import { createSharedRouter } from './routes/shared';
 
