@@ -87,22 +87,21 @@ export function useGraphState(initialMindmapId?: string) {
       }
     }
     load();
+    // Cleanup runs both when the id changes (switching maps) and on unmount
+    // (closing). In either case, flush unsaved edits of the map we're leaving
+    // before the next load overwrites the refs. Fire-and-forget: the component
+    // may be gone, so we can't await or surface an error here.
     return () => {
       cancelled = true;
-    };
-  }, [initialMindmapId]);
-
-  // Flush unsaved edits when the mindmap closes (component unmounts).
-  useEffect(() => {
-    return () => {
       if (dirtyRef.current && mindmapIdRef.current) {
         void updateMindmap(mindmapIdRef.current, {
           nodes: toMindmapNodes(nodesRef.current),
           edges: toMindmapEdges(edgesRef.current),
         });
+        dirtyRef.current = false;
       }
     };
-  }, []);
+  }, [initialMindmapId]);
 
   const onNodesChange: OnNodesChange = useCallback((changes) => {
     setNodes((nds) => {
