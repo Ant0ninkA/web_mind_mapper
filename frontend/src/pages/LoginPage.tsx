@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { LoginForm } from './components/LoginForm';
-import { RegisterForm } from './components/RegisterForm';
-import './Auth.css';
+import { LoginForm } from '../components/LoginForm';
+import '../Auth.css';
 
-export const AuthPage: React.FC = () => {
+export const LoginPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
@@ -15,11 +14,7 @@ export const AuthPage: React.FC = () => {
         </div>
       </div>
       <div className="auth-form-wrapper">
-        {isLogin ? (
-          <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
-        ) : (
-          <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
-        )}
+        <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
       </div>
     </div>
   );

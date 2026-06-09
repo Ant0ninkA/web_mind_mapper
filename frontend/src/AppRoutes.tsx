@@ -2,6 +2,9 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import App from './App';
 import MindmapDashboard from './pages/MindmapDashboard';
+import { RegisterPage } from './pages/RegisterPage'
+import { LoginPage } from './pages/LoginPage'
+
 import { ProtectedRoute } from './components/ProtectedRoute'; // Guard wrapper
 
 const AppRoutes: React.FC = () => {
@@ -9,8 +12,8 @@ const AppRoutes: React.FC = () => {
     <Routes>
       {/* Publicly visible auth/landing views */}
       <Route path="/" element={<MindmapDashboard />} />
-      <Route path="/login" element={<MindmapDashboard />} />
-      <Route path="/register" element={<MindmapDashboard />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/shared/:token" element={<MindmapDashboard />} />
       
       {/* Protected canvas paths—redirects guests instantly */}
