@@ -1,6 +1,8 @@
 import { Db } from 'mongodb';
+import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { config } from './config';
 
 const MIGRATIONS_COLLECTION = 'schema_migrations';
 const INIT_DIR = path.resolve(__dirname, '../../db/init');
@@ -29,9 +31,10 @@ export async function runMigrations(db: Db): Promise<void> {
       continue;
     }
 
-    const code = fs.readFileSync(path.join(INIT_DIR, script), 'utf-8');
-    const fn = new Function('db', 'print', code);
-    fn(db, console.log);
+    const scriptPath = path.join(INIT_DIR, script);
+    execSync(`mongosh "${config.mongoUri}" "${scriptPath}" --quiet`, {
+      stdio: 'pipe',
+    });
 
     await migrations.insertOne({ script, appliedAt: new Date() });
     console.log(`[migrate] Applied: ${script}`);
