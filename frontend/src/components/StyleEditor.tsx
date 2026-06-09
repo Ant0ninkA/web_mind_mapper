@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PanelSection from "./PanelSection";
 import TextInput from "./TextInput";
 import SelectInput from "./SelectInput";
@@ -47,11 +47,12 @@ interface StyleEditorProps {
     onReset?: (elementId: string) => void;
     onUndo?: (elementId: string) => void;
     canUndo?: boolean;
+    onSave?: () => Promise<void>;
 }
 
-const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onChange, onReset, onUndo, canUndo = false }) => {
+const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onChange, onReset, onUndo, canUndo = false, onSave }) => {
     const { style, updateStyle, resetStyle } = useElementStyle(initialStyle);
-
+    const [isSaving, setIsSaving] = useState(false);
     // Apply live: push every real style change up to the parent. We emit only
     // when `style`'s identity differs from the last value we emitted (updateStyle
     // always produces a new object). Comparing values — rather than using a
@@ -74,6 +75,19 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onCh
 
     const handleUndo = () => {
         if (onUndo) onUndo(elementId);
+    };
+
+    const handleSave = async () => {
+        if (!onSave) return;
+        setIsSaving(true);
+        try {
+            await onSave();
+            // Тук по желание можеш да добавиш изскачащо съобщение или тоуст за успех
+        } catch (error) {
+            console.error("Failed to save style changes to the database:", error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -173,6 +187,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onCh
             <div className="style-editor__actions">
                 <Button onClick={handleUndo} variant="primary" disabled={!canUndo}>Undo</Button>
                 <Button onClick={handleReset} variant="secondary">Reset</Button>
+                {onSave && <Button onClick={handleSave} variant="primary" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save'}</Button>}
             </div>
         </div>
         );

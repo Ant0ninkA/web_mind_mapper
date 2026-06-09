@@ -31,7 +31,8 @@ const App: React.FC = () => {
     onConnect,
     onNodesDelete,
     onEdgesDelete,
-    updateNodeStyle
+    updateNodeStyle,
+    save
   } = useGraphState(id);
 
   const history = useStyleHistory();
@@ -93,6 +94,7 @@ const App: React.FC = () => {
             onReset={handleResetStyle}
             onUndo={handleUndoStyle}
             canUndo={history.canUndo(selectedNode.id)}
+            onSave={save}
           />
         ) : (
           <p style={{ padding: '20px' }}>Click a node to edit its style.</p>
