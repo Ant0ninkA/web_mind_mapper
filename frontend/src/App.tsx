@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react'; 
+import React, { useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { defaultStyle } from './hooks/useElementStyle';
@@ -15,20 +16,21 @@ const App: React.FC = () => {
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const { id } = useParams<{ id: string }>();
 
-  const { 
-    nodes, 
-    edges, 
-    onNodesChange, 
-    onEdgesChange, 
-    addNode, 
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    addNode,
     addEdgeByIds,
     onConnect,
     onNodesDelete,
     onEdgesDelete,
     updateNodeStyle,
     save
-  } = useGraphState();
+  } = useGraphState(id);
 
   const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
     setSelectedNode(node);
