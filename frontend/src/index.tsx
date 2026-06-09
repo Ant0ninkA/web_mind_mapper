@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import AppRoutes from './AppRoutes';
-import { AuthProvider } from './pages/AuthContext'; // Enforces your structure
+import { AuthProvider } from './pages/AuthContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

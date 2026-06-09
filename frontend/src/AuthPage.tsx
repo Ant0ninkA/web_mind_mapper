@@ -10,7 +10,7 @@ export const AuthPage: React.FC = () => {
     <div className="auth-page-container">
       <div className="auth-sidebar">
         <div className="sidebar-content">
-          <h1>🧠 Web Mind Mapper</h1>
+          <h1>🧠 Mind Mapper</h1>
           <p>Organize thoughts, design architectures, and structure plans visually using dynamic relational nodes.</p>
         </div>
       </div>
