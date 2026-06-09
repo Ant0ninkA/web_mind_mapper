@@ -2,6 +2,11 @@ import React, { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler } from 'reactflow';
 import 'reactflow/dist/style.css';
+
+// Context & Protected Routing Imports
+import { AuthProvider, useAuth } from './pages/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+
 import { defaultStyle } from './hooks/useElementStyle';
 import SideDrawer from './components/SideDrawer';
 import AddNodeForm from './components/AddNodeForm';
@@ -11,12 +16,15 @@ import { useGraphState } from './hooks/useGraphState';
 import type { ElementStyle } from './hooks/useElementStyle'; 
 import './App.css';
 
-const App: React.FC = () => {
+const MindMapperWorkspace: React.FC = () => {
   const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const { id } = useParams<{ id: string }>();
+
+  // Grab the global user data and logout function from our auth hook
+  const { user, logout } = useAuth();
 
   const {
     nodes,
@@ -38,11 +46,9 @@ const App: React.FC = () => {
   }, []);
 
   const onPaneClick = useCallback(() => {
-  setSelectedNode(null);
-}, []);
+    setSelectedNode(null);
+  }, []);
 
-  
-  // Apply commits the style locally and is the moment we persist to the backend.
   const handleApplyStyle = useCallback((elementId: string, style: ElementStyle) => {
     updateNodeStyle(elementId, style);
     void save();
@@ -88,6 +94,12 @@ const App: React.FC = () => {
       </SideDrawer>
 
       <div className="graph-container" style={{ flexGrow: 1, height: '100%' }}>
+        {/* Added a toolbar profile display to utilize user session information */}
+        <div className="user-toolbar-profile" style={{ position: 'absolute', top: 10, right: 10, zIndex: 4, display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '5px 15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <span style={{ fontSize: '14px', fontWeight: 500 }}>{user?.username}</span>
+          <button onClick={logout} style={{ padding: '4px 8px', fontSize: '12px', cursor: 'pointer', border: '1px solid #d1d5db', borderRadius: '4px', background: '#f9fafb' }}>Log Out</button>
+        </div>
+
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -116,6 +128,16 @@ const App: React.FC = () => {
         <AddEdgeForm nodes={nodes} onAddEdge={addEdgeByIds} />
       </SideDrawer>
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <MindMapperWorkspace />
+      </ProtectedRoute>
+    </AuthProvider>
   );
 };
 
