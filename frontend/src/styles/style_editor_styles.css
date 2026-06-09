@@ -8,3 +8,16 @@
   gap: var(--spacing-md);
   margin-top: var(--spacing-lg);
 }
+
+.color-input__hex--error {
+  border-color: #ff4d4f !important;
+}
+
+
+.color-input__error-text {
+  color: #ff4d4f;
+  font-size: 12px;
+  display: block;
+  margin-top: 4px;
+  font-weight: 500;
+}

@@ -2,20 +2,23 @@ import React, { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { defaultStyle } from './hooks/useElementStyle';
+import { defaultStyle, cssToElementStyle } from './hooks/useElementStyle';
 import SideDrawer from './components/SideDrawer';
 import AddNodeForm from './components/AddNodeForm';
 import AddEdgeForm from './components/AddEdgeForm';
-import StyleEditor from './components/StyleEditor'; 
+import StyleEditor from './components/StyleEditor';
 import { useGraphState } from './hooks/useGraphState';
-import type { ElementStyle } from './hooks/useElementStyle'; 
+import { useStyleHistory } from './hooks/useStyleHistory';
+import type { ElementStyle } from './hooks/useElementStyle';
 import './App.css';
 
 const App: React.FC = () => {
   const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  // Bumped on undo to force the StyleEditor to re-seed from the restored style.
+  const [styleVersion, setStyleVersion] = useState(0);
   const { id } = useParams<{ id: string }>();
 
   const {
@@ -28,42 +31,49 @@ const App: React.FC = () => {
     onConnect,
     onNodesDelete,
     onEdgesDelete,
-    updateNodeStyle,
-    save
+    updateNodeStyle
   } = useGraphState(id);
 
+  const history = useStyleHistory();
+
+  // Derive the selected node from the live graph so its style stays current.
+  const selectedNode = selectedNodeId
+    ? nodes.find((n) => n.id === selectedNodeId) ?? null
+    : null;
+
   const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
-    setSelectedNode(node);
-    setLeftDrawerOpen(true); 
+    setSelectedNodeId(node.id);
+    setLeftDrawerOpen(true);
   }, []);
 
   const onPaneClick = useCallback(() => {
-  setSelectedNode(null);
-}, []);
+    setSelectedNodeId(null);
+  }, []);
 
-  
-  // Apply commits the style locally and is the moment we persist to the backend.
-  const handleApplyStyle = useCallback((elementId: string, style: ElementStyle) => {
+  // Live apply: every style change snapshots the node's current style (for undo),
+  // then updates the node. Persistence happens via the hook's flush-on-close.
+  const handleStyleChange = useCallback((elementId: string, style: ElementStyle) => {
+    const node = nodes.find((n) => n.id === elementId);
+    if (node) {
+      history.record(elementId, cssToElementStyle(node.style, (node.data.label as string) ?? ''));
+    }
     updateNodeStyle(elementId, style);
-    void save();
-  }, [updateNodeStyle, save]);
+  }, [nodes, history, updateNodeStyle]);
 
   const handleResetStyle = useCallback((elementId: string) => {
     updateNodeStyle(elementId, defaultStyle);
   }, [updateNodeStyle]);
 
+  // Undo restores the most recent style snapshot for the node.
+  const handleUndoStyle = useCallback((elementId: string) => {
+    const snapshot = history.undo(elementId);
+    if (!snapshot) return;
+    updateNodeStyle(elementId, snapshot);
+    setStyleVersion((v) => v + 1);
+  }, [history, updateNodeStyle]);
+
   const selectedInitialStyle = selectedNode
-    ? {
-        labelText: selectedNode.data.label as string,
-        ...(selectedNode.style && {
-          backgroundColor: selectedNode.style.backgroundColor as string,
-          textColor: selectedNode.style.color as string,
-          borderColor: selectedNode.style.borderColor as string,
-          fontFamily: selectedNode.style.fontFamily as string,
-          fontWeight: selectedNode.style.fontWeight as string,
-          textAlign: selectedNode.style.textAlign as string,
-        }),
-      }
+    ? cssToElementStyle(selectedNode.style, (selectedNode.data.label as string) ?? '')
     : undefined;
 
   return (
@@ -76,11 +86,13 @@ const App: React.FC = () => {
       >
         {selectedNode ? (
           <StyleEditor
-            key={selectedNode.id} 
+            key={`${selectedNode.id}:${styleVersion}`}
             elementId={selectedNode.id}
             initialStyle={selectedInitialStyle}
-            onApply={handleApplyStyle}
+            onChange={handleStyleChange}
             onReset={handleResetStyle}
+            onUndo={handleUndoStyle}
+            canUndo={history.canUndo(selectedNode.id)}
           />
         ) : (
           <p style={{ padding: '20px' }}>Click a node to edit its style.</p>

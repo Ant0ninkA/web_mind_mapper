@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import PanelSection from "./PanelSection";
 import TextInput from "./TextInput";
 import SelectInput from "./SelectInput";
@@ -43,20 +43,37 @@ const textAlignOptions = [
 interface StyleEditorProps {
     elementId: string;
     initialStyle?: Partial<ElementStyle>;
-    onApply: (elementId: string, style: ElementStyle)=> void;
+    onChange: (elementId: string, style: ElementStyle) => void;
     onReset?: (elementId: string) => void;
+    onUndo?: (elementId: string) => void;
+    canUndo?: boolean;
 }
 
-const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onApply, onReset }) => {
+const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onChange, onReset, onUndo, canUndo = false }) => {
     const { style, updateStyle, resetStyle } = useElementStyle(initialStyle);
 
-    const handleApply = () => {
-        onApply(elementId, style);
-    };
+    // Apply live: push every real style change up to the parent. We emit only
+    // when `style`'s identity differs from the last value we emitted (updateStyle
+    // always produces a new object). Comparing values — rather than using a
+    // "first run" flag — is robust to the effect running twice (StrictMode) and
+    // to remounts, so neither selecting a node nor an undo-driven remount
+    // spuriously re-applies (and re-snapshots) the existing style.
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
+    const lastEmitted = useRef(style);
+    useEffect(() => {
+        if (style === lastEmitted.current) return;
+        lastEmitted.current = style;
+        onChangeRef.current(elementId, style);
+    }, [style, elementId]);
 
     const handleReset = () => {
         resetStyle();
         if(onReset) onReset(elementId);
+    };
+
+    const handleUndo = () => {
+        if (onUndo) onUndo(elementId);
     };
 
     return (
@@ -154,7 +171,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, initialStyle, onAp
             </PanelSection>
              
             <div className="style-editor__actions">
-                <Button onClick={handleApply} variant="primary">Apply Style</Button>
+                <Button onClick={handleUndo} variant="primary" disabled={!canUndo}>Undo</Button>
                 <Button onClick={handleReset} variant="secondary">Reset</Button>
             </div>
         </div>

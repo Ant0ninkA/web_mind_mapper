@@ -6,7 +6,7 @@ import MindmapDashboard from './pages/MindmapDashboard';
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<MindmapDashboard />} />
+      <Route path="/" element={<App />} />
       <Route path="/login" element={<MindmapDashboard />} />
       <Route path="/register" element={<MindmapDashboard />} />
       <Route path="/map" element={<App />} />
