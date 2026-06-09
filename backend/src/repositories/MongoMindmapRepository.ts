@@ -16,6 +16,10 @@ export class MongoMindmapRepository implements IMindmapRepository {
     return this.db.collection<Mindmap>(COLLECTION).findOne({ id, ownerId }) ?? null;
   }
 
+  async findByIdPublic(id: string): Promise<Mindmap | null> {
+    return this.db.collection<Mindmap>(COLLECTION).findOne({ id }) ?? null;
+  }
+
   async create(dto: CreateMindmapDto, ownerId: string): Promise<Mindmap> {
     const now = new Date();
     const mindmap: Mindmap = {
