@@ -9,7 +9,9 @@
     "dev": "ts-node --files src/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "db:init": "source .env && for f in ../db/init/[0-9]*.js; do mongosh \"$MONGO_URI\" \"$f\" --quiet; done",
+    "db:reset": "source .env && mongosh \"$MONGO_URI\" --eval 'db.dropDatabase()' --quiet"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
