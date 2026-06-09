@@ -22,11 +22,12 @@ const App: React.FC = () => {
     onNodesChange, 
     onEdgesChange, 
     addNode, 
-    addEdgeByIds, 
+    addEdgeByIds,
     onConnect,
     onNodesDelete,
     onEdgesDelete,
-    updateNodeStyle 
+    updateNodeStyle,
+    save
   } = useGraphState();
 
   const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
@@ -39,12 +40,14 @@ const App: React.FC = () => {
 }, []);
 
   
+  // Apply commits the style locally and is the moment we persist to the backend.
   const handleApplyStyle = useCallback((elementId: string, style: ElementStyle) => {
-    updateNodeStyle(elementId, style as unknown as Record<string, unknown>);
-  }, [updateNodeStyle]);
+    updateNodeStyle(elementId, style);
+    void save();
+  }, [updateNodeStyle, save]);
 
   const handleResetStyle = useCallback((elementId: string) => {
-    updateNodeStyle(elementId, defaultStyle as unknown as Record<string, unknown>);
+    updateNodeStyle(elementId, defaultStyle);
   }, [updateNodeStyle]);
 
   const selectedInitialStyle = selectedNode

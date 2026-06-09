@@ -1,4 +1,5 @@
 import  {useCallback,useState} from "react";
+import type { CSSProperties } from "react";
 
 export interface ElementStyle {
     labelText: string;
@@ -29,6 +30,23 @@ export const defaultStyle: ElementStyle = {
     borderRadius: 6,
     opacity: 1,
 };
+
+/** Map the editor's ElementStyle to the CSS object ReactFlow renders on a node. */
+export function elementStyleToCss(s: ElementStyle): CSSProperties {
+    return {
+        backgroundColor: s.backgroundColor,
+        color: s.textColor,
+        borderColor: s.borderColor,
+        borderWidth: `${s.borderWidth}px`,
+        borderStyle: s.borderStyle,
+        borderRadius: `${s.borderRadius}px`,
+        fontSize: `${s.fontSize}px`,
+        fontFamily: s.fontFamily,
+        fontWeight: s.fontWeight,
+        textAlign: s.textAlign as CSSProperties['textAlign'],
+        opacity: s.opacity,
+    };
+}
 
 export function useElementStyle(initialStyle?: Partial<ElementStyle>) {
     const [style, setStyle] = useState<ElementStyle>({

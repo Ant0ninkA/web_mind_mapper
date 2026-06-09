@@ -1,107 +1,185 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import type { Node, Edge, OnNodesChange, OnEdgesChange, Connection } from 'reactflow';
+import { getMindmap, listMindmaps, createMindmap, updateMindmap } from '../api/mindmaps';
+import { ApiError } from '../api/client';
+import { toFlowNodes, toFlowEdges, toMindmapNodes, toMindmapEdges, newId } from '../api/adapters';
+import { elementStyleToCss } from './useElementStyle';
+import type { ElementStyle } from './useElementStyle';
 
-const initialNodes: Node[] = [
-  { id: '1', position: { x: 250, y: 50 }, data: { label: 'Node 1' } },
-  { id: '2', position: { x: 100, y: 200 }, data: { label: 'Node 2' } },
-  { id: '3', position: { x: 400, y: 200 }, data: { label: 'Node 3' } },
-];
+const PERSISTABLE_NODE_CHANGES = new Set(['position', 'remove']);
+const PERSISTABLE_EDGE_CHANGES = new Set(['remove']);
 
-const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2' },
-  { id: 'e1-3', source: '1', target: '3' },
-];
+/**
+ * Owns the live graph and keeps it in sync with the backend.
+ *
+ * Edits are kept local; the graph is pushed to the backend only when `save()` is
+ * called (the Style editor's Apply button) or when the mindmap closes (unmount),
+ * which avoids a request per keystroke or drag.
+ *
+ * @param initialMindmapId  When provided (e.g. from the `/map/:id` route) that
+ *   mindmap is loaded. Until routing lands it may be omitted, in which case the
+ *   first existing mindmap is opened, or a fresh one created if none exist.
+ */
+export function useGraphState(initialMindmapId?: string) {
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [mindmapId, setMindmapId] = useState<string | null>(initialMindmapId ?? null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-let nodeIdCounter = 4;
+  const nodesRef = useRef<Node[]>([]);
+  const edgesRef = useRef<Edge[]>([]);
+  const mindmapIdRef = useRef<string | null>(initialMindmapId ?? null);
+  const dirtyRef = useRef(false);
 
-export function useGraphState() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const writeNodes = useCallback((next: Node[]) => {
+    nodesRef.current = next;
+    setNodes(next);
+    dirtyRef.current = true;
+  }, []);
 
-  const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
-  );
+  const writeEdges = useCallback((next: Edge[]) => {
+    edgesRef.current = next;
+    setEdges(next);
+    dirtyRef.current = true;
+  }, []);
 
-  const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
-  );
+  const save = useCallback(async (): Promise<void> => {
+    const id = mindmapIdRef.current;
+    if (!id || !dirtyRef.current) return;
+    try {
+      await updateMindmap(id, {
+        nodes: toMindmapNodes(nodesRef.current),
+        edges: toMindmapEdges(edgesRef.current),
+      });
+      dirtyRef.current = false;
+      setError(null);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to save changes');
+      throw err;
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const mindmap = initialMindmapId
+          ? await getMindmap(initialMindmapId)
+          : (await listMindmaps())[0] ?? (await createMindmap({ name: 'Untitled mindmap' }));
+        if (cancelled) return;
+        const flowNodes = toFlowNodes(mindmap.nodes);
+        const flowEdges = toFlowEdges(mindmap.edges);
+        nodesRef.current = flowNodes;
+        edgesRef.current = flowEdges;
+        mindmapIdRef.current = mindmap.id;
+        dirtyRef.current = false;
+        setNodes(flowNodes);
+        setEdges(flowEdges);
+        setMindmapId(mindmap.id);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : 'Failed to load mindmap');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialMindmapId]);
+
+  // Flush unsaved edits when the mindmap closes (component unmounts).
+  useEffect(() => {
+    return () => {
+      if (dirtyRef.current && mindmapIdRef.current) {
+        void updateMindmap(mindmapIdRef.current, {
+          nodes: toMindmapNodes(nodesRef.current),
+          edges: toMindmapEdges(edgesRef.current),
+        });
+      }
+    };
+  }, []);
+
+  const onNodesChange: OnNodesChange = useCallback((changes) => {
+    setNodes((nds) => {
+      const next = applyNodeChanges(changes, nds);
+      nodesRef.current = next;
+      return next;
+    });
+    if (changes.some((c) => PERSISTABLE_NODE_CHANGES.has(c.type))) dirtyRef.current = true;
+  }, []);
+
+  const onEdgesChange: OnEdgesChange = useCallback((changes) => {
+    setEdges((eds) => {
+      const next = applyEdgeChanges(changes, eds);
+      edgesRef.current = next;
+      return next;
+    });
+    if (changes.some((c) => PERSISTABLE_EDGE_CHANGES.has(c.type))) dirtyRef.current = true;
+  }, []);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    []
+    (params: Connection) => {
+      writeEdges(addEdge({ ...params, id: newId() }, edgesRef.current));
+    },
+    [writeEdges]
   );
 
-  const addNode = useCallback((label: string) => {
-    const id = String(nodeIdCounter++);
-    const newNode: Node = {
-      id,
-      position: {
-        x: Math.random() * 400 + 50,
-        y: Math.random() * 400 + 50,
-      },
-      data: { label },
-    };
-    setNodes((nds) => {
-      const updated = [...nds, newNode];
-      console.log("Nodes: ", updated);
-      return updated;
-    });
-  }, []);
+  const addNode = useCallback(
+    (label: string) => {
+      const newNode: Node = {
+        id: newId(),
+        position: { x: Math.random() * 400 + 50, y: Math.random() * 400 + 50 },
+        data: { label },
+      };
+      writeNodes([...nodesRef.current, newNode]);
+    },
+    [writeNodes]
+  );
 
-  const updateNodeStyle = useCallback((nodeId: string, newStyle: Record<string, unknown>) => {
-    setNodes((nds) =>
-      nds.map((node): Node => {
-        if (node.id !== nodeId) return node;
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            label: (newStyle.labelText as string) || node.data.label,
-          },
-          style: {
-            backgroundColor: newStyle.backgroundColor as string,
-            color: newStyle.textColor as string,
-            borderColor: newStyle.borderColor as string,
-            borderWidth: `${newStyle.borderWidth}px`,
-            borderStyle: newStyle.borderStyle as string,
-            borderRadius: `${newStyle.borderRadius}px`,
-            fontSize: `${newStyle.fontSize}px`,
-            fontFamily: newStyle.fontFamily as string,
-            fontWeight: newStyle.fontWeight as string,
-            textAlign: newStyle.textAlign as React.CSSProperties['textAlign'],
-            opacity: newStyle.opacity as number,
-          },
-        };
-      })
-    );
-  }, []);
+  const updateNodeStyle = useCallback(
+    (nodeId: string, style: ElementStyle) => {
+      writeNodes(
+        nodesRef.current.map((node) =>
+          node.id === nodeId
+            ? {
+                ...node,
+                data: { ...node.data, label: style.labelText || node.data.label },
+                style: elementStyleToCss(style),
+              }
+            : node
+        )
+      );
+    },
+    [writeNodes]
+  );
 
-  const addEdgeByIds = useCallback((sourceId: string, targetId: string) => {
-    const id = `e${sourceId}-${targetId}`;
-    const newEdge: Edge = { id, source: sourceId, target: targetId };
-    setEdges((eds) => {
-      const updated = [...eds, newEdge];
-      console.log("Edges: ", updated);
-      return updated;
-    });
-  }, []);
+  const addEdgeByIds = useCallback(
+    (sourceId: string, targetId: string) => {
+      writeEdges([...edgesRef.current, { id: newId(), source: sourceId, target: targetId }]);
+    },
+    [writeEdges]
+  );
 
   const onNodesDelete = useCallback(
     (deleted: Node[]) => {
-      setNodes((nds) => nds.filter((node) => !deleted.find((d) => d.id === node.id)));
-      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.source || d.id === edge.target)));
+      const ids = new Set(deleted.map((d) => d.id));
+      writeNodes(nodesRef.current.filter((n) => !ids.has(n.id)));
+      writeEdges(edgesRef.current.filter((e) => !ids.has(e.source) && !ids.has(e.target)));
     },
-    [setNodes, setEdges]
+    [writeNodes, writeEdges]
   );
 
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
-      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.id)));
+      const ids = new Set(deleted.map((d) => d.id));
+      writeEdges(edgesRef.current.filter((e) => !ids.has(e.id)));
     },
-    [setEdges]
+    [writeEdges]
   );
 
   return {
@@ -115,5 +193,9 @@ export function useGraphState() {
     onNodesDelete,
     onEdgesDelete,
     updateNodeStyle,
+    mindmapId,
+    loading,
+    error,
+    save,
   };
 }
