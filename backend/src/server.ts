@@ -1,6 +1,9 @@
 import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
 import { config } from './config';
 import { connectToMongo } from './db';
+import { initializeDatabase } from './initDb';
 import { InMemoryMindmapRepository } from './repositories/InMemoryMindmapRepository';
 import { MongoMindmapRepository } from './repositories/MongoMindmapRepository';
 import { IMindmapRepository } from './repositories/IMindmapRepository';
@@ -8,12 +11,15 @@ import { createMindmapRouter } from './routes/mindmaps';
 
 async function bootstrap() {
   const app = express();
+  app.use(cors());
+  app.use(morgan('dev'));
   app.use(express.json());
 
   let repo: IMindmapRepository;
 
   if (config.useMongo) {
     const db = await connectToMongo();
+    await initializeDatabase(db);
     repo = new MongoMindmapRepository(db);
     console.log('Using MongoDB repository');
   } else {
