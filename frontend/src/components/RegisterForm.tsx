@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../api/authentication';
+import { useNavigate } from 'react-router-dom';
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -7,6 +8,7 @@ interface RegisterFormProps {
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +25,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
     try {
       await register(email, username, password);
+      navigate('/');
     } catch (err: any) {
       if (err.status === 400 && err.details) {
         setValidationDetails(err.details);
