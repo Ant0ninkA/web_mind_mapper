@@ -14,6 +14,10 @@ export class InMemoryMindmapRepository implements IMindmapRepository {
     return m && m.ownerId === ownerId ? m : null;
   }
 
+  async findByIdPublic(id: string): Promise<Mindmap | null> {
+    return this.store.get(id) ?? null;
+  }
+
   async create(dto: CreateMindmapDto, ownerId: string): Promise<Mindmap> {
     const now = new Date();
     const mindmap: Mindmap = {

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { IMindmapRepository } from '../repositories/IMindmapRepository';
+import { IShareTokenRepository } from '../repositories/IShareTokenRepository';
 import { requireAuth } from '../auth/middleware';
 
 interface ValidationError {
@@ -68,7 +69,10 @@ function validateMindmapInput(body: unknown, requireName: boolean): ValidationEr
   return validateName(name, requireName) || validateNodes(nodes) || validateEdges(edges);
 }
 
-export function createMindmapRouter(repo: IMindmapRepository): Router {
+export function createMindmapRouter(
+  repo: IMindmapRepository,
+  shareTokens: IShareTokenRepository,
+): Router {
   const router = Router();
 
   router.use(requireAuth);
@@ -120,6 +124,21 @@ export function createMindmapRouter(repo: IMindmapRepository): Router {
       return;
     }
     res.status(204).send();
+  });
+
+  router.post('/:id/share', async (req: Request, res: Response) => {
+    const mindmap = await repo.findById(req.params.id, req.user!.id);
+    if (!mindmap) {
+      res.status(404).json({ error: 'Mindmap not found' });
+      return;
+    }
+    const existing = await shareTokens.findByMindmapId(mindmap.id);
+    if (existing) {
+      res.json({ shareUrl: `/shared/${existing.token}` });
+      return;
+    }
+    const created = await shareTokens.create({ mindmapId: mindmap.id });
+    res.status(201).json({ shareUrl: `/shared/${created.token}` });
   });
 
   return router;

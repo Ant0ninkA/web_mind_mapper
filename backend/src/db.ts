@@ -35,3 +35,13 @@ export async function assertUsersCollectionExists(database: Db): Promise<void> {
     );
   }
 }
+
+export async function assertShareTokensCollectionExists(database: Db): Promise<void> {
+  const collections = await database.listCollections({ name: 'share_tokens' }).toArray();
+  if (collections.length === 0) {
+    throw new Error(
+      "Required collection 'share_tokens' is missing. " +
+        'The DB owner must run db/init/ scripts to create it before starting this server.',
+    );
+  }
+}
