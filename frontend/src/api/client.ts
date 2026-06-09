@@ -1,25 +1,11 @@
 // Shared HTTP client for the frontend.
 //
 // Every API module (mindmaps, auth, sharing) goes through `request` so that
-// auth headers, JSON parsing and error handling stay in one place. Do not call
+// credentials, JSON parsing and error handling stay in one place. Do not call
 // `fetch` directly elsewhere.
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL ?? 'http://localhost:3001';
-
-const TOKEN_STORAGE_KEY = 'auth_token';
-
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_STORAGE_KEY);
-}
-
-export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_STORAGE_KEY, token);
-}
-
-export function clearToken(): void {
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
-}
 
 export class ApiError extends Error {
   status: number;
@@ -36,8 +22,6 @@ export class ApiError extends Error {
 interface RequestOptions {
   body?: unknown;
   headers?: Record<string, string>;
-  /** Skip attaching the Authorization header (e.g. public share routes). */
-  skipAuth?: boolean;
 }
 
 async function request<T>(
@@ -50,20 +34,14 @@ async function request<T>(
     ...options.headers,
   };
 
-  if (!options.skipAuth) {
-    const token = getToken();
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-  }
-
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers,
+    credentials: 'include',
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
 
-    if (response.status === 204) {
+  if (response.status === 204) {
     return undefined as T;
   }
 
