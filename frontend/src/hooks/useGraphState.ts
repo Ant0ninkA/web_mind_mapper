@@ -10,17 +10,11 @@ import type { ElementStyle } from './useElementStyle';
 const PERSISTABLE_NODE_CHANGES = new Set(['position', 'remove']);
 const PERSISTABLE_EDGE_CHANGES = new Set(['remove']);
 
-/**
- * Owns the live graph and keeps it in sync with the backend.
- *
- * Edits are kept local; the graph is pushed to the backend only when `save()` is
- * called (the Style editor's Apply button) or when the mindmap closes (unmount),
- * which avoids a request per keystroke or drag.
- *
- * @param initialMindmapId  When provided (e.g. from the `/map/:id` route) that
- *   mindmap is loaded. Until routing lands it may be omitted, in which case the
- *   first existing mindmap is opened, or a fresh one created if none exist.
- */
+interface GraphSnapshot {
+  nodes: Node[];
+  edges: Edge[];
+}
+
 export function useGraphState(initialMindmapId?: string) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -32,6 +26,44 @@ export function useGraphState(initialMindmapId?: string) {
   const edgesRef = useRef<Edge[]>([]);
   const mindmapIdRef = useRef<string | null>(initialMindmapId ?? null);
   const dirtyRef = useRef(false);
+
+  // 1. ИСТОРИЯ И ДЕБЪНС РЕФЕРЕНЦИИ ЗА СТИЛОВЕТЕ
+  const [past, setPast] = useState<GraphSnapshot[]>([]);
+  const styleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastEditedNodeRef = useRef<string | null>(null);
+  const lastEditedFieldRef = useRef<string | null>(null);
+
+  // Помощна функция за дълбоко копиране на състоянието в историята
+  const takeSnapshot = useCallback(() => {
+    setPast((p) => [
+      ...p,
+      {
+        nodes: JSON.parse(JSON.stringify(nodesRef.current)),
+        edges: JSON.parse(JSON.stringify(edgesRef.current)),
+      },
+    ]);
+  }, []);
+
+  // 2. ФУНКЦИЯ ЗА ГЛОБАЛНО UNDO
+  const undo = useCallback(() => {
+    if (past.length === 0) return;
+
+    // Изчистваме таймерите за стилове, ако има активни в момента
+    if (styleTimerRef.current) clearTimeout(styleTimerRef.current);
+    lastEditedNodeRef.current = null;
+    lastEditedFieldRef.current = null;
+
+    const previousSnapshot = past[past.length - 1];
+    setPast((p) => p.slice(0, -1));
+
+    // Обновяваме и стейта, и референциите
+    nodesRef.current = previousSnapshot.nodes;
+    edgesRef.current = previousSnapshot.edges;
+    setNodes(previousSnapshot.nodes);
+    setEdges(previousSnapshot.edges);
+    
+    dirtyRef.current = true; // Отбелязваме, че графиката е променена спрямо базата данни
+  }, [past]);
 
   const writeNodes = useCallback((next: Node[]) => {
     nodesRef.current = next;
@@ -80,6 +112,7 @@ export function useGraphState(initialMindmapId?: string) {
         setNodes(flowNodes);
         setEdges(flowEdges);
         setMindmapId(mindmap.id);
+        setPast([]); // Изчистваме историята при зареждане на нова карта
       } catch (err) {
         if (!cancelled) setError(err instanceof ApiError ? err.message : 'Failed to load mindmap');
       } finally {
@@ -141,22 +174,23 @@ export function useGraphState(initialMindmapId?: string) {
     [writeNodes]
   );
 
+  // 4. ИНТЕЛИГЕНТНО ОБНОВЯВАНЕ НА СТИЛА СЪС ЗАЩИТА НА ИСТОРИЯТА
   const updateNodeStyle = useCallback(
-    (nodeId: string, style: ElementStyle) => {
-      writeNodes(
-        nodesRef.current.map((node) =>
-          node.id === nodeId
-            ? {
-                ...node,
-                data: { ...node.data, label: style.labelText || node.data.label },
-                style: elementStyleToCss(style),
-              }
-            : node
-        )
-      );
-    },
-    [writeNodes]
-  );
+  (nodeId: string, style: ElementStyle) => {
+    writeNodes(
+      nodesRef.current.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: { ...node.data, label: style.labelText || node.data.label },
+              style: elementStyleToCss(style),
+            }
+          : node
+      )
+    );
+  },
+  [writeNodes]
+);
 
   const addEdgeByIds = useCallback(
     (sourceId: string, targetId: string) => {
@@ -197,5 +231,7 @@ export function useGraphState(initialMindmapId?: string) {
     loading,
     error,
     save,
+    undo,                // Експортираме глобалната функция
+    canUndo: past.length > 0, // Подаваме състоянието за бутона
   };
 }
