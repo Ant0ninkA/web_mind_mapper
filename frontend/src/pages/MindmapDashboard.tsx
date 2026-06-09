@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../api/authentication';
 import { LoginPage } from './LoginPage'; 
 
 const MindmapDashboard: React.FC = () => {
