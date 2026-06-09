@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../pages/AuthContext';
+import { useAuth } from '../api/authentication';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;

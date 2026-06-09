@@ -3,7 +3,8 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import morgan from 'morgan';
 import { config } from './config';
-import { connectToMongo, assertUsersCollectionExists, assertShareTokensCollectionExists } from './db';
+import { connectToMongo } from './db';
+import { runMigrations } from './db-migrate';
 import { InMemoryMindmapRepository } from './repositories/InMemoryMindmapRepository';
 import { MongoMindmapRepository } from './repositories/MongoMindmapRepository';
 import { IMindmapRepository } from './repositories/IMindmapRepository';
@@ -32,8 +33,7 @@ async function bootstrap() {
 
   if (config.useMongo) {
     const db = await connectToMongo();
-    await assertUsersCollectionExists(db);
-    await assertShareTokensCollectionExists(db);
+    await runMigrations(db);
     mindmaps = new MongoMindmapRepository(db);
     users = new MongoUserRepository(db);
     shareTokens = new MongoShareTokenRepository(db);

@@ -4,9 +4,8 @@ import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler } fro
 import 'reactflow/dist/style.css';
 import { defaultStyle, cssToElementStyle } from './hooks/useElementStyle';
 // Context & Protected Routing Imports
-import { AuthProvider, useAuth } from './pages/AuthContext';
+import { AuthProvider, useAuth } from './api/authentication';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { defaultStyle } from './hooks/useElementStyle';
 import SideDrawer from './components/SideDrawer';
 import AddNodeForm from './components/AddNodeForm';
 import AddEdgeForm from './components/AddEdgeForm';
