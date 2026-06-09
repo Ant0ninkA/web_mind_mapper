@@ -1,7 +1,7 @@
 const validator = {
   $jsonSchema: {
     bsonType: "object",
-    required: ["id", "name", "nodes", "edges", "createdAt", "updatedAt"],
+    required: ["id", "ownerId", "name", "nodes", "edges", "createdAt", "updatedAt"],
     additionalProperties: true,
     properties: {
       _id: {},
@@ -9,6 +9,11 @@ const validator = {
         bsonType: "string",
         pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
         description: "Application-level UUID. Server queries by this field, not by _id.",
+      },
+      ownerId: {
+        bsonType: "string",
+        pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+        description: "UUID of the owning user.",
       },
       name: {
         bsonType: "string",

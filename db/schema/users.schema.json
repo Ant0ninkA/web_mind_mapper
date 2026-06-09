@@ -1,0 +1,29 @@
+{
+  "bsonType": "object",
+  "required": ["id", "email", "username", "passwordHash", "createdAt", "updatedAt"],
+  "additionalProperties": true,
+  "properties": {
+    "_id": {},
+    "id": {
+      "bsonType": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "email": {
+      "bsonType": "string"
+    },
+    "username": {
+      "bsonType": "string",
+      "minLength": 3,
+      "maxLength": 32,
+      "pattern": "^[a-zA-Z0-9_]+$"
+    },
+    "passwordHash": {
+      "bsonType": "string"
+    },
+    "avatarUrl": {
+      "bsonType": ["string", "null"]
+    },
+    "createdAt": { "bsonType": "date" },
+    "updatedAt": { "bsonType": "date" }
+  }
+}
