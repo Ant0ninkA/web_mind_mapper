@@ -5,6 +5,8 @@
 // `fetch` directly elsewhere.
 
 import {RequestOptions, ApiError } from "./types";
+// Re-export so existing imports of `ApiError` from `../api/client` keep working.
+export { ApiError } from "./types";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL ?? 'http://localhost:3001';
