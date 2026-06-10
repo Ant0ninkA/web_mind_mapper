@@ -1,0 +1,18 @@
+flowchart LR
+  RF["ReactFlow"] -->|"node/edge change, connect, delete"| UGS["useGraphState"]
+  SE["StyleEditor (live onChange)"] -->|"handleStyleChange / handleEdgeStyleChange"| UGS
+  SE -->|"onUndo"| USH["useStyleHistory (per-element snapshot stacks)"]
+  USH -->|"record / undo / clearStackAfterSave"| App
+
+  UGS -->|"nodes, edges, name (state)"| RF
+  UGS -->|"refs + dirty flag"| Persist
+
+  subgraph Persist["persistence"]
+    save["save() / flush-on-close"] --> UMM["updateMindmap (PUT)"]
+    load["load on mount"] --> GMM["getMindmap (GET)"]
+  end
+
+  UGS <-->|"toFlowNodes / toMindmapNodes"| ADP["adapters.ts"]
+  UMM --> CL["client.ts"]
+  GMM --> CL
+  CL -->|"credentials: include"| BE[("/mindmaps")]

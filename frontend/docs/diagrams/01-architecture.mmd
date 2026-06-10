@@ -1,0 +1,49 @@
+flowchart TD
+  index["index.tsx"] --> AuthProvider
+  AuthProvider --> Router["BrowserRouter"]
+  Router --> AppRoutes
+
+  subgraph Pages
+    Dashboard["MindmapDashboard"]
+    Login["LoginPage"]
+    Register["RegisterPage"]
+    Shared["SharedMapPage"]
+    Editor["App / MindMapperWorkspace"]
+  end
+
+  AppRoutes --> Pages
+
+  subgraph Components
+    direction LR
+    Forms["LoginForm / RegisterForm / AddNodeForm / AddEdgeForm"]
+    Editing["MapNavbar / StyleEditor / MindmapCard / ShareDialog / SideDrawer"]
+    Primitives["Button / IconButton / TextInput / NumberInput / ColorInput / SelectInput / PanelSection"]
+  end
+
+  subgraph Hooks
+    UGS["useGraphState"]
+    USH["useStyleHistory"]
+    UES["useElementStyle"]
+    UFE["useFormErrors"]
+  end
+
+  subgraph API["api/"]
+    Client["client.ts (fetch wrapper)"]
+    Mindmaps["mindmaps.ts"]
+    Sharing["sharing.ts"]
+    Auth["authentication.tsx"]
+    Adapters["adapters.ts"]
+    Types["types.ts"]
+  end
+
+  Pages --> Components
+  Pages --> Hooks
+  Pages --> API
+  Editing --> Primitives
+  Components --> Hooks
+  Hooks --> API
+  Mindmaps --> Client
+  Sharing --> Client
+  Auth --> Client
+  UGS --> Adapters
+  Client -->|"HTTP + cookie"| BE[("Express backend")]

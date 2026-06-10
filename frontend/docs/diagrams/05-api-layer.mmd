@@ -1,0 +1,18 @@
+flowchart TD
+  subgraph api
+    Client["client.ts (fetch + ApiError + cookies)"]
+    Types["types.ts (contract types)"]
+    Adapters["adapters.ts (BE to ReactFlow)"]
+    Mindmaps["mindmaps.ts"]
+    Sharing["sharing.ts"]
+    Auth["authentication.tsx"]
+  end
+
+  Mindmaps -->|"list/get/create/update/delete"| E1["/mindmaps and /mindmaps/:id"]
+  Sharing -->|"createShareLink"| E2["POST /mindmaps/:id/share"]
+  Sharing -->|"getSharedMindmap"| E3["GET /shared/:token"]
+  Auth -->|"login/register/logout"| E4["/auth/*"]
+  Auth -->|"getCurrentUser"| E5["GET /users/me"]
+  Mindmaps --> Client
+  Sharing --> Client
+  Auth --> Client

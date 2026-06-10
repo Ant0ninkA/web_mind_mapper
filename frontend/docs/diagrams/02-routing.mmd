@@ -1,0 +1,12 @@
+flowchart LR
+  R{{"/"}} --> D["MindmapDashboard (shows LoginPage if logged out)"]
+  L{{"/login"}} --> LP["LoginPage"]
+  Rg{{"/register"}} --> RP["RegisterPage"]
+  S{{"/shared/:token"}} --> SM["SharedMapPage (public, read-only)"]
+  M{{"/map/:id"}} --> PR["ProtectedRoute"] --> APP["App = MindMapperWorkspace"]
+  Star{{"*"}} -.redirect.-> R
+
+  classDef pub fill:#e6f7e6,stroke:#33aa33;
+  classDef prot fill:#fde9e9,stroke:#cc3333;
+  class R,L,Rg,S,Star pub;
+  class M prot;

@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant U as User
+  participant LF as LoginForm
+  participant AC as AuthProvider
+  participant API as api/auth
+  participant BE as Backend
+  U->>LF: submit credentials
+  LF->>AC: login(email, pw)
+  AC->>API: POST /auth/login
+  API->>BE: (sets HttpOnly cookie)
+  BE-->>AC: { user }
+  AC->>AC: setUser(user)
+  Note over AC: on app mount, GET /users/me restores session from cookie
+  AC-->>U: redirect (LoginPage effect) to "/"
