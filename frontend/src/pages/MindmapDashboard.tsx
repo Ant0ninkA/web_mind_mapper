@@ -7,7 +7,7 @@ import { listMindmaps, createMindmap, updateMindmap, deleteMindmap } from '../ap
 import type { Mindmap } from '../api/types';
 import MindmapCard from '../components/MindmapCard';
 import Button from '../components/Button';
-import '../Dashboard.css';
+import '../styles/dashboard_styles.css';
 
 const MindmapDashboard: React.FC = () => {
   const { user, loading: authLoading, logout } = useAuth();

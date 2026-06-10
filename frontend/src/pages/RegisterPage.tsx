@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { RegisterForm } from '../components/RegisterForm';
 import { useNavigate } from 'react-router-dom';
-import '../Auth.css';
+import '../styles/auth_styles.css';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();

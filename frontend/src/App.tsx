@@ -12,7 +12,7 @@ import StyleEditor from './components/StyleEditor';
 import { useGraphState } from './hooks/useGraphState';
 import { useStyleHistory } from './hooks/useStyleHistory';
 import type { ElementStyle } from './hooks/useElementStyle';
-import './App.css';
+import './styles/app_styles.css';
 
 const MindMapperWorkspace: React.FC = () => {
   const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
