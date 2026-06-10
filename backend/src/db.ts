@@ -12,16 +12,3 @@ export async function connectToMongo(): Promise<Db> {
   console.log('Connected to MongoDB:', config.mongoUri);
   return db;
 }
-
-export async function disconnectFromMongo(): Promise<void> {
-  if (client) {
-    await client.close();
-    client = null;
-    db = null;
-  }
-}
-
-export function getDb(): Db {
-  if (!db) throw new Error('MongoDB not connected. Call connectToMongo() first.');
-  return db;
-}
