@@ -19,12 +19,14 @@ export function useGraphState(initialMindmapId?: string) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [mindmapId, setMindmapId] = useState<string | null>(initialMindmapId ?? null);
+  const [name, setNameState] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const nodesRef = useRef<Node[]>([]);
   const edgesRef = useRef<Edge[]>([]);
   const mindmapIdRef = useRef<string | null>(initialMindmapId ?? null);
+  const nameRef = useRef('');
   const dirtyRef = useRef(false);
 
   // 1. ИСТОРИЯ И ДЕБЪНС РЕФЕРЕНЦИИ ЗА СТИЛОВЕТЕ
@@ -82,6 +84,7 @@ export function useGraphState(initialMindmapId?: string) {
     if (!id || !dirtyRef.current) return;
     try {
       await updateMindmap(id, {
+        name: nameRef.current,
         nodes: toMindmapNodes(nodesRef.current),
         edges: toMindmapEdges(edgesRef.current),
       });
@@ -108,10 +111,12 @@ export function useGraphState(initialMindmapId?: string) {
         nodesRef.current = flowNodes;
         edgesRef.current = flowEdges;
         mindmapIdRef.current = mindmap.id;
+        nameRef.current = mindmap.name;
         dirtyRef.current = false;
         setNodes(flowNodes);
         setEdges(flowEdges);
         setMindmapId(mindmap.id);
+        setNameState(mindmap.name);
         setPast([]); // Изчистваме историята при зареждане на нова карта
       } catch (err) {
         if (!cancelled) setError(err instanceof ApiError ? err.message : 'Failed to load mindmap');
@@ -130,11 +135,19 @@ export function useGraphState(initialMindmapId?: string) {
     return () => {
       if (dirtyRef.current && mindmapIdRef.current) {
         void updateMindmap(mindmapIdRef.current, {
+          name: nameRef.current,
           nodes: toMindmapNodes(nodesRef.current),
           edges: toMindmapEdges(edgesRef.current),
         });
       }
     };
+  }, []);
+
+  // Rename the open mindmap locally; persisted on the next save/flush.
+  const renameMindmap = useCallback((next: string) => {
+    nameRef.current = next;
+    setNameState(next);
+    dirtyRef.current = true;
   }, []);
 
   const onNodesChange: OnNodesChange = useCallback((changes) => {
@@ -228,6 +241,8 @@ export function useGraphState(initialMindmapId?: string) {
     onEdgesDelete,
     updateNodeStyle,
     mindmapId,
+    name,
+    renameMindmap,
     loading,
     error,
     save,
