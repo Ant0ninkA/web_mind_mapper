@@ -34,7 +34,6 @@ export const defaultStyle: ElementStyle = {
     animated: false,
 };
 
-/** Map the editor's ElementStyle to the CSS object ReactFlow renders on a node. */
 export function elementStyleToCss(s: ElementStyle): CSSProperties {
     return {
         backgroundColor: s.backgroundColor,
@@ -60,11 +59,6 @@ function parseNumeric(value: unknown, fallback: number): number {
     return fallback;
 }
 
-/**
- * Inverse of elementStyleToCss: read a node's stored CSS + label back into an
- * ElementStyle (e.g. to prefill the editor or to snapshot for undo). Missing or
- * non-parseable fields fall back to defaultStyle.
- */
 export function cssToElementStyle(css: CSSProperties | undefined, label: string): ElementStyle {
     const s = css ?? {};
     return {
@@ -92,10 +86,8 @@ export function useElementStyle(initialStyle?: Partial<ElementStyle>) {
     const updateStyle = useCallback(<K extends keyof ElementStyle>(key: K, value: ElementStyle[K]) => {
         setStyle(prev => ({ ...prev, [key]: value }));}, []);
 
-    const resetStyle = useCallback(() =>{
-        setStyle({ ...defaultStyle, ...initialStyle});}, [initialStyle]);
 
-    return { style, updateStyle, resetStyle };  
+    return { style, updateStyle};  
 }
 
 export function edgeToElementStyle(edge: Edge): ElementStyle {

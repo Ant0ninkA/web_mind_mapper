@@ -92,7 +92,6 @@ const ColorInput: React.FC<ColorInputProps> = ({ label, value, onChange,onErrorC
         />
       </div>
 
-      {/* Динамично съобщение за грешка */}
       {!isValid && (
         <span className="color-input__error-text">
           Please enter a valid color (e.g., 'red' or '#ff0000')

@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler, type EdgeMouseHandler} from 'reactflow';
 import 'reactflow/dist/style.css';
 import { defaultStyle, cssToElementStyle , edgeToElementStyle} from './hooks/useElementStyle';
-// Context & Protected Routing Imports
 import { AuthProvider, useAuth } from './api/authentication';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import SideDrawer from './components/SideDrawer';
@@ -21,11 +20,9 @@ const MindMapperWorkspace: React.FC = () => {
   
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  // Bumped on undo to force the StyleEditor to re-seed from the restored style.
-  const [styleVersion, setStyleVersion] = useState(0);
+  const [savedStyle, setSavedStyle] = useState<ElementStyle | null>(null);
   const { id } = useParams<{ id: string }>();
 
-  // Grab the global user data and logout function from our auth hook
   const { user, logout } = useAuth();
 
   const {
@@ -47,7 +44,7 @@ const MindMapperWorkspace: React.FC = () => {
 
   const history = useStyleHistory();
 
-  // Derive the selected node from the live graph so its style stays current.
+
   const selectedNode = selectedNodeId
     ? nodes.find((n) => n.id === selectedNodeId) ?? null
     : null;
@@ -59,22 +56,25 @@ const MindMapperWorkspace: React.FC = () => {
   const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
     setSelectedNodeId(node.id);
     setLeftDrawerOpen(true);
+
+    setSavedStyle(cssToElementStyle(node.style, (node.data.label as string) ?? '')); 
   }, []);
 
   const onEdgeClick = useCallback<EdgeMouseHandler> ((event, edge) => {
     setSelectedEdgeId(edge.id);
     setSelectedNodeId(null);
     setLeftDrawerOpen(true);
+
+    setSavedStyle(edgeToElementStyle(edge));
   }, []);
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setLeftDrawerOpen(false);
+    setSavedStyle(null);
   }, []);
 
-  // Live apply: every style change snapshots the node's current style (for undo),
-  // then updates the node. Persistence happens via the hook's flush-on-close.
   const handleStyleChange = useCallback((elementId: string, style: ElementStyle) => {
     const node = nodes.find((n) => n.id === elementId);
     if (node) {
@@ -84,23 +84,14 @@ const MindMapperWorkspace: React.FC = () => {
   }, [nodes, history, updateNodeStyle]);
 
   const handleEdgeStyleChange = useCallback((elementId: string, style: ElementStyle) => {
-  // Намираме текущото ребро в масива
   const edge = edges.find((e) => e.id === elementId);
   
   if (edge) {
-    // 1. Записваме старото състояние в историята на хука useStyleHistory (за Undo)
     history.record(elementId, edgeToElementStyle(edge));
   }
-  
-  // 2. Бутаме новия стил къмuseGraphState, за да се преначертае на екрана веднага
   updateEdgeStyle(elementId, style);
 }, [edges, history, updateEdgeStyle]);
 
-  const handleResetStyle = useCallback((elementId: string) => {
-    updateNodeStyle(elementId, defaultStyle);
-  }, [updateNodeStyle]);
-
-  // Undo restores the most recent style snapshot for the node.
   const handleUndoStyle = useCallback((elementId: string) => {
     const snapshot = history.undo(elementId);
     if (!snapshot) return;
@@ -109,13 +100,31 @@ const MindMapperWorkspace: React.FC = () => {
   if (isNode) {
     updateNodeStyle(elementId, snapshot);
   } else {
-    // Ако не е нод, значи е ребро!
     updateEdgeStyle(elementId, snapshot);
   }
   
-  // 3. Вдигаме версията, за да се обновят кутийките в редактора
-  setStyleVersion((v) => v + 1);
 }, [history, nodes, updateNodeStyle, updateEdgeStyle]);
+
+const handleSave = useCallback(async () => {
+  const activeId = selectedNodeId || selectedEdgeId;
+  if (!activeId) return;
+
+  try {
+    await save();
+    history.clearStackAfterSave(activeId); 
+    
+    const currentNode = nodes.find((n) => n.id === selectedNodeId);
+    const currentEdge = edges.find((e) => e.id === selectedEdgeId);
+    
+    if (currentNode) {
+      setSavedStyle(cssToElementStyle(currentNode.style, (currentNode.data.label as string) ?? ''));
+    } else if (currentEdge) {
+      setSavedStyle(edgeToElementStyle(currentEdge));
+    }
+  } catch (error) {
+    console.error("Грешка при запис:", error);
+  }
+}, [save, selectedNodeId, selectedEdgeId, nodes, edges, history]);
 
   const selectedInitialStyle = selectedNode
     ? cssToElementStyle(selectedNode.style, (selectedNode.data.label as string) ?? '')
@@ -131,30 +140,25 @@ const MindMapperWorkspace: React.FC = () => {
       >
         {selectedNode ? (
           <StyleEditor
-            key={`${selectedNode.id}:${styleVersion}`}
+            key={`${selectedNode.id}-${history.canUndo(selectedNode.id)}`}
             elementId={selectedNode.id}
             elementType="node"
             initialStyle={selectedInitialStyle}
             onChange={handleStyleChange}
-            onReset={handleResetStyle}
             onUndo={handleUndoStyle}
             canUndo={history.canUndo(selectedNode.id)}
-            onSave={save}
+            onSave={handleSave}
           />
         ) : selectedEdge ? (
           <StyleEditor
-            key={`${selectedEdge.id}:${styleVersion}`}
+            key={`${selectedEdge.id}-${history.canUndo(selectedEdge.id)}`}
             elementId={selectedEdge.id}
             elementType="edge"
             initialStyle={edgeToElementStyle(selectedEdge)}
-            onChange={handleEdgeStyleChange} // <-- ПРОМЕНИ ТОЗИ РЕД ТУК
-    
-    onReset={(id) => {
-      if (updateEdgeStyle) updateEdgeStyle(id, defaultStyle);
-    }}
-    onUndo={handleUndoStyle}
-    canUndo={canUndo}
-    onSave={save}
+            onChange={handleEdgeStyleChange} 
+            onUndo={handleUndoStyle}
+            canUndo={history.canUndo(selectedEdge.id)}
+            onSave={handleSave}
           />
         ) : (
           <p style={{ padding: '20px' }}>Click a node or edge to edit its style.</p>
@@ -162,7 +166,6 @@ const MindMapperWorkspace: React.FC = () => {
       </SideDrawer>
 
       <div className="graph-container" style={{ flexGrow: 1, height: '100%' }}>
-        {/* Added a toolbar profile display to utilize user session information */}
         <div className="user-toolbar-profile" style={{ position: 'absolute', top: 10, right: 10, zIndex: 4, display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '5px 15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
           <span style={{ fontSize: '14px', fontWeight: 500 }}>{user?.username}</span>
           <button onClick={logout} style={{ padding: '4px 8px', fontSize: '12px', cursor: 'pointer', border: '1px solid #d1d5db', borderRadius: '4px', background: '#f9fafb' }}>Log Out</button>

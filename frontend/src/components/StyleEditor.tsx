@@ -45,21 +45,14 @@ interface StyleEditorProps {
     elementType: 'node' | 'edge';
     initialStyle?: Partial<ElementStyle>;
     onChange: (elementId: string, style: ElementStyle) => void;
-    onReset?: (elementId: string) => void;
     onUndo?: (elementId: string) => void;
     canUndo?: boolean;
     onSave?: () => Promise<void>;
 }
 
-const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, elementType, initialStyle, onChange, onReset, onUndo, canUndo = false, onSave }) => {
-    const { style, updateStyle, resetStyle } = useElementStyle(initialStyle);
+const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, elementType, initialStyle, onChange, onUndo, canUndo = false, onSave }) => {
+    const { style, updateStyle} = useElementStyle(initialStyle);
     const [isSaving, setIsSaving] = useState(false);
-    // Apply live: push every real style change up to the parent. We emit only
-    // when `style`'s identity differs from the last value we emitted (updateStyle
-    // always produces a new object). Comparing values — rather than using a
-    // "first run" flag — is robust to the effect running twice (StrictMode) and
-    // to remounts, so neither selecting a node nor an undo-driven remount
-    // spuriously re-applies (and re-snapshots) the existing style.
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
     const lastEmitted = useRef(style);
@@ -69,10 +62,6 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, elementType, initi
         onChangeRef.current(elementId, style);
     }, [style, elementId]);
 
-    const handleReset = () => {
-        resetStyle();
-        if(onReset) onReset(elementId);
-    };
 
     const handleUndo = () => {
         if (onUndo) onUndo(elementId);
@@ -83,7 +72,6 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, elementType, initi
         setIsSaving(true);
         try {
             await onSave();
-            // Тук по желание можеш да добавиш изскачащо съобщение или тоуст за успех
         } catch (error) {
             console.error("Failed to save style changes to the database:", error);
         } finally {
@@ -106,7 +94,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, elementType, initi
                 <PanelSection title="Line Style">
                     <ColorInput
                         label="Line Color"
-                        value={style.borderColor} // Цвят на реброто
+                        value={style.borderColor} 
                         onChange={(val) => updateStyle('borderColor', val)}
                     />
                     <NumberInput
@@ -133,8 +121,7 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, elementType, initi
 
                 <div className="style-editor__actions">
                     <Button onClick={handleUndo} variant="primary" disabled={!canUndo}>Undo</Button>
-                    <Button onClick={handleReset} variant="secondary">Reset</Button>
-                    {onSave && <Button onClick={onSave} variant="primary">Save</Button>}
+                    {onSave && <Button onClick={handleSave} variant="primary" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save'}</Button>}
                 </div>
             </div>
         );
@@ -236,7 +223,6 @@ const StyleEditor: React.FC<StyleEditorProps> = ({ elementId, elementType, initi
              
             <div className="style-editor__actions">
                 <Button onClick={handleUndo} variant="primary" disabled={!canUndo}>Undo</Button>
-                <Button onClick={handleReset} variant="secondary">Reset</Button>
                 {onSave && <Button onClick={handleSave} variant="primary" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save'}</Button>}
             </div>
         </div>
