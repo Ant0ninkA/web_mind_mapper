@@ -1,0 +1,104 @@
+.map-navbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  padding: 0 16px;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  z-index: 5;
+}
+
+.map-navbar__section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.map-navbar__section--right {
+  justify-content: flex-end;
+}
+
+.map-navbar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #555878;
+  background: #f4f5fb;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.map-navbar__back:hover {
+  background: #eef0fb;
+  color: #1a1d2e;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.map-navbar__title {
+  flex: 0 1 360px;
+  min-width: 120px;
+  text-align: center;
+  padding: 7px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1d2e;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.map-navbar__title:hover {
+  background: #f4f5fb;
+}
+
+.map-navbar__title:focus {
+  outline: none;
+  background: #fff;
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.map-navbar__btn {
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #555878;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.map-navbar__btn:hover:not(:disabled) {
+  background: #f0f1fb;
+  color: #1a1d2e;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.map-navbar__btn--primary {
+  color: #fff;
+  background: #6366f1;
+  border-color: #6366f1;
+}
+
+.map-navbar__btn--primary:hover:not(:disabled) {
+  background: #5254cc;
+  border-color: #5254cc;
+}
+
+.map-navbar__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

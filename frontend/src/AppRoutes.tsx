@@ -4,6 +4,7 @@ import App from './App';
 import MindmapDashboard from './pages/MindmapDashboard';
 import { RegisterPage } from './pages/RegisterPage'
 import { LoginPage } from './pages/LoginPage'
+import SharedMapPage from './pages/SharedMapPage'
 
 import { ProtectedRoute } from './components/ProtectedRoute'; // Guard wrapper
 
@@ -14,7 +15,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/" element={<MindmapDashboard />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/shared/:token" element={<MindmapDashboard />} />
+      <Route path="/shared/:token" element={<SharedMapPage />} />
       
       {/* Protected canvas paths—redirects guests instantly */}
       <Route 

@@ -5,6 +5,7 @@ import 'reactflow/dist/style.css';
 import { defaultStyle, cssToElementStyle , edgeToElementStyle} from './hooks/useElementStyle';
 import { AuthProvider, useAuth } from './api/authentication';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import MapNavbar from './components/MapNavbar';
 import SideDrawer from './components/SideDrawer';
 import AddNodeForm from './components/AddNodeForm';
 import AddEdgeForm from './components/AddEdgeForm';
@@ -23,8 +24,8 @@ const MindMapperWorkspace: React.FC = () => {
   const [savedStyle, setSavedStyle] = useState<ElementStyle | null>(null);
   const { id } = useParams<{ id: string }>();
 
-  const { user, logout } = useAuth();
 
+  const { user, logout } = useAuth();
   const {
     nodes,
     edges,
@@ -36,6 +37,9 @@ const MindMapperWorkspace: React.FC = () => {
     onNodesDelete,
     onEdgesDelete,
     updateNodeStyle,
+    mindmapId,
+    name,
+    renameMindmap
     updateEdgeStyle,
     save,
     undo,
@@ -131,7 +135,9 @@ const handleSave = useCallback(async () => {
     : undefined;
 
   return (
-    <div className="app">
+    <div className="editor-shell" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <MapNavbar mindmapId={mindmapId} name={name} onRename={renameMindmap} onSave={save} />
+      <div className="app" style={{ flex: 1, minHeight: 0, height: 'auto', width: '100%' }}>
       <SideDrawer
         isOpen={leftDrawerOpen}
         onToggle={() => setLeftDrawerOpen((o) => !o)}
@@ -199,6 +205,7 @@ const handleSave = useCallback(async () => {
         <AddNodeForm onAddNode={addNode} />
         <AddEdgeForm nodes={nodes} onAddEdge={addEdgeByIds} />
       </SideDrawer>
+      </div>
     </div>
   );
 };
