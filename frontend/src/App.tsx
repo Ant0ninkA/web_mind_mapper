@@ -1,10 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler, type EdgeMouseHandler} from 'reactflow';
+import ReactFlow, { Background, Controls, type NodeMouseHandler, type EdgeMouseHandler} from 'reactflow';
 import 'reactflow/dist/style.css';
-import { defaultStyle, cssToElementStyle , edgeToElementStyle} from './hooks/useElementStyle';
-import { AuthProvider, useAuth } from './api/authentication';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { cssToElementStyle , edgeToElementStyle} from './hooks/useElementStyle';
 import MapNavbar from './components/MapNavbar';
 import SideDrawer from './components/SideDrawer';
 import AddNodeForm from './components/AddNodeForm';
@@ -21,11 +19,10 @@ const MindMapperWorkspace: React.FC = () => {
   
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  const [savedStyle, setSavedStyle] = useState<ElementStyle | null>(null);
+  // Bumped on undo to force the StyleEditor to re-seed from the restored style.
+  const [styleVersion, setStyleVersion] = useState(0);
   const { id } = useParams<{ id: string }>();
 
-
-  const { user, logout } = useAuth();
   const {
     nodes,
     edges,
@@ -58,23 +55,18 @@ const MindMapperWorkspace: React.FC = () => {
   const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
     setSelectedNodeId(node.id);
     setLeftDrawerOpen(true);
-
-    setSavedStyle(cssToElementStyle(node.style, (node.data.label as string) ?? '')); 
   }, []);
 
-  const onEdgeClick = useCallback<EdgeMouseHandler> ((event, edge) => {
+  const onEdgeClick = useCallback<EdgeMouseHandler>((_event, edge) => {
     setSelectedEdgeId(edge.id);
     setSelectedNodeId(null);
     setLeftDrawerOpen(true);
-
-    setSavedStyle(edgeToElementStyle(edge));
   }, []);
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setLeftDrawerOpen(false);
-    setSavedStyle(null);
   }, []);
 
   const handleStyleChange = useCallback((elementId: string, style: ElementStyle) => {
@@ -97,15 +89,14 @@ const MindMapperWorkspace: React.FC = () => {
   const handleUndoStyle = useCallback((elementId: string) => {
     const snapshot = history.undo(elementId);
     if (!snapshot) return;
-  const isNode = nodes.some((n) => n.id === elementId);
-  
-  if (isNode) {
-    updateNodeStyle(elementId, snapshot);
-  } else {
-    updateEdgeStyle(elementId, snapshot);
-  }
-  
-}, [history, nodes, updateNodeStyle, updateEdgeStyle]);
+    const isNode = nodes.some((n) => n.id === elementId);
+    if (isNode) {
+      updateNodeStyle(elementId, snapshot);
+    } else {
+      updateEdgeStyle(elementId, snapshot);
+    }
+    setStyleVersion((v) => v + 1);
+  }, [history, nodes, updateNodeStyle, updateEdgeStyle]);
 
 const handleSave = useCallback(async () => {
   const activeId = selectedNodeId || selectedEdgeId;
@@ -113,20 +104,11 @@ const handleSave = useCallback(async () => {
 
   try {
     await save();
-    history.clearStackAfterSave(activeId); 
-    
-    const currentNode = nodes.find((n) => n.id === selectedNodeId);
-    const currentEdge = edges.find((e) => e.id === selectedEdgeId);
-    
-    if (currentNode) {
-      setSavedStyle(cssToElementStyle(currentNode.style, (currentNode.data.label as string) ?? ''));
-    } else if (currentEdge) {
-      setSavedStyle(edgeToElementStyle(currentEdge));
-    }
+    history.clearStackAfterSave(activeId);
   } catch (error) {
-    console.error("Грешка при запис:", error);
+    console.error('Failed to save changes:', error);
   }
-}, [save, selectedNodeId, selectedEdgeId, nodes, edges, history]);
+}, [save, selectedNodeId, selectedEdgeId, history]);
 
   const selectedInitialStyle = selectedNode
     ? cssToElementStyle(selectedNode.style, (selectedNode.data.label as string) ?? '')
@@ -144,7 +126,7 @@ const handleSave = useCallback(async () => {
       >
         {selectedNode ? (
           <StyleEditor
-            key={`${selectedNode.id}-${history.canUndo(selectedNode.id)}`}
+            key={`${selectedNode.id}:${styleVersion}`}
             elementId={selectedNode.id}
             elementType="node"
             initialStyle={selectedInitialStyle}
@@ -155,7 +137,7 @@ const handleSave = useCallback(async () => {
           />
         ) : selectedEdge ? (
           <StyleEditor
-            key={`${selectedEdge.id}-${history.canUndo(selectedEdge.id)}`}
+            key={`${selectedEdge.id}:${styleVersion}`}
             elementId={selectedEdge.id}
             elementType="edge"
             initialStyle={edgeToElementStyle(selectedEdge)}
@@ -170,11 +152,6 @@ const handleSave = useCallback(async () => {
       </SideDrawer>
 
       <div className="graph-container" style={{ flexGrow: 1, height: '100%' }}>
-        <div className="user-toolbar-profile" style={{ position: 'absolute', top: 10, right: 10, zIndex: 4, display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '5px 15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>{user?.username}</span>
-          <button onClick={logout} style={{ padding: '4px 8px', fontSize: '12px', cursor: 'pointer', border: '1px solid #d1d5db', borderRadius: '4px', background: '#f9fafb' }}>Log Out</button>
-        </div>
-
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -208,12 +185,6 @@ const handleSave = useCallback(async () => {
   );
 };
 
-const App: React.FC = () => {
-  return (
-    <AuthProvider>
-        <MindMapperWorkspace />
-    </AuthProvider>
-  );
-};
+const App: React.FC = () => <MindMapperWorkspace />;
 
 export default App;

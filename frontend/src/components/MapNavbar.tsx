@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ShareDialog from './ShareDialog';
-import '../MapNavbar.css';
+import '../styles/map_navbar_styles.css';
 
 interface MapNavbarProps {
   mindmapId: string | null;

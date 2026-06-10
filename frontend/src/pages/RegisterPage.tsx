@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { RegisterForm } from '../components/RegisterForm';
 import { useNavigate } from 'react-router-dom';
 import '../styles/auth_styles.css';

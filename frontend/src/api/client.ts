@@ -4,27 +4,10 @@
 // credentials, JSON parsing and error handling stay in one place. Do not call
 // `fetch` directly elsewhere.
 
+import {RequestOptions, ApiError } from "./types";
+
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL ?? 'http://localhost:3001';
-
-// Custom API Error class mapping to backend's structural format
-export class ApiError extends Error {
-  status: number;
-  details?: string[];
-
-  constructor(status: number, message: string, details?: string[]) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.details = details;
-  }
-}
-
-interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  body?: unknown;
-  headers?: Record<string, string>;
-}
 
 export async function request<T>(
   path: string,

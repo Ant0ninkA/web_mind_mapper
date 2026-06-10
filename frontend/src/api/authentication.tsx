@@ -1,18 +1,7 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { api } from './client';
+import { AuthResponse, User } from './types';
 
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  avatarUrl: string | null;
-  createdAt: string; // ISO 8601
-  updatedAt: string;
-}
-
-export interface AuthResponse {
-  user: User;
-}
 
 /** Standalone API Network Calls */
 

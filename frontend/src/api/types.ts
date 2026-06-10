@@ -61,3 +61,35 @@ export interface UpdateMindmapDto {
   nodes?: MindmapNode[];
   edges?: MindmapEdge[];
 }
+
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  avatarUrl: string | null;
+  createdAt: string; // ISO 8601
+  updatedAt: string;
+}
+
+export interface AuthResponse {
+  user: User;
+}
+
+export class ApiError extends Error {
+  status: number;
+  details?: string[];
+
+  constructor(status: number, message: string, details?: string[]) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.details = details;
+  }
+}
+
+export interface RequestOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  body?: unknown;
+  headers?: Record<string, string>;
+}
+

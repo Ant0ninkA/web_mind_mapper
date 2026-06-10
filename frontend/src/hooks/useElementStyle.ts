@@ -1,6 +1,6 @@
 import  {useCallback,useState} from "react";
 import type { CSSProperties } from "react";
-import type { Node, Edge } from "reactflow";
+import type { Edge } from "reactflow";
 
 export interface ElementStyle {
     labelText: string;

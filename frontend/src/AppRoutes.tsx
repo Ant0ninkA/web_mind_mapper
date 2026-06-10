@@ -16,14 +16,6 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/shared/:token" element={<SharedMapPage />} />
-      
-      {/* Protected canvas paths—redirects guests instantly */}
-      <Route 
-        path="/map" 
-        element={
-            <App />
-        } 
-      />
       <Route 
         path="/map/:id" 
         element={

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createShareLink } from '../api/sharing';
-import { ApiError } from '../api/client';
+import { ApiError } from '../api/types';
 import Button from './Button';
-import '../Share.css';
+import '../styles/share_styles.css';
 
 interface ShareDialogProps {
   mindmapId: string;
@@ -16,7 +16,6 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ mindmapId, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Generate (or fetch the existing) share link as soon as the dialog opens.
   useEffect(() => {
     let cancelled = false;
     setLoading(true);

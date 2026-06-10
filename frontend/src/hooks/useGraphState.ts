@@ -35,18 +35,6 @@ export function useGraphState(initialMindmapId?: string) {
   const lastEditedNodeRef = useRef<string | null>(null);
   const lastEditedFieldRef = useRef<string | null>(null);
 
-  
-  const takeSnapshot = useCallback(() => {
-    setPast((p) => [
-      ...p,
-      {
-        nodes: JSON.parse(JSON.stringify(nodesRef.current)),
-        edges: JSON.parse(JSON.stringify(edgesRef.current)),
-      },
-    ]);
-  }, []);
-
-
   const undo = useCallback(() => {
     if (past.length === 0) return;
 
