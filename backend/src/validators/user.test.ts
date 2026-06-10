@@ -1,9 +1,4 @@
-import {
-  validateRegister,
-  validateLogin,
-  validatePatchProfile,
-  validatePatchPassword,
-} from './user';
+import { validateRegister, validateLogin } from './user';
 
 describe('validateRegister', () => {
   it('passes for valid input', () => {
@@ -52,44 +47,3 @@ describe('validateLogin', () => {
   });
 });
 
-describe('validatePatchProfile', () => {
-  it('passes when no fields are sent', () => {
-    expect(validatePatchProfile({})).toEqual([]);
-  });
-
-  it('passes for valid username', () => {
-    expect(validatePatchProfile({ username: 'new_name' })).toEqual([]);
-  });
-
-  it('rejects bad username', () => {
-    expect(validatePatchProfile({ username: 'x x' }).length).toBeGreaterThan(0);
-  });
-
-  it('accepts null avatarUrl', () => {
-    expect(validatePatchProfile({ avatarUrl: null })).toEqual([]);
-  });
-
-  it('rejects non-string avatarUrl', () => {
-    expect(validatePatchProfile({ avatarUrl: 123 as unknown as string }).length).toBeGreaterThan(0);
-  });
-});
-
-describe('validatePatchPassword', () => {
-  it('passes for valid input', () => {
-    expect(
-      validatePatchPassword({ oldPassword: 'oldpass12', newPassword: 'newpass12' }),
-    ).toEqual([]);
-  });
-
-  it('rejects missing oldPassword', () => {
-    expect(validatePatchPassword({ newPassword: 'newpass12' })).toContain(
-      'oldPassword is required',
-    );
-  });
-
-  it('rejects short newPassword', () => {
-    expect(
-      validatePatchPassword({ oldPassword: 'oldpass12', newPassword: 'short' }),
-    ).toContain('newPassword must be at least 8 characters');
-  });
-});

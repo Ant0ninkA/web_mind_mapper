@@ -50,22 +50,3 @@ export function validateLogin(body: Record<string, unknown>): string[] {
   return errs;
 }
 
-export function validatePatchProfile(body: Record<string, unknown>): string[] {
-  const errs: string[] = [];
-  if (body.username !== undefined) checkUsername(body.username, errs);
-  if (body.avatarUrl !== undefined && body.avatarUrl !== null && !isString(body.avatarUrl)) {
-    errs.push('avatarUrl must be a string or null');
-  }
-  return errs;
-}
-
-export function validatePatchPassword(body: Record<string, unknown>): string[] {
-  const errs: string[] = [];
-  if (body.oldPassword === undefined) errs.push('oldPassword is required');
-  if (body.newPassword === undefined) {
-    errs.push('newPassword is required');
-  } else if (!isString(body.newPassword) || body.newPassword.length < PASSWORD_MIN) {
-    errs.push(`newPassword must be at least ${PASSWORD_MIN} characters`);
-  }
-  return errs;
-}
