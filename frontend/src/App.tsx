@@ -19,8 +19,6 @@ const MindMapperWorkspace: React.FC = () => {
   
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  // Bumped on undo to force the StyleEditor to re-seed from the restored style.
-  const [styleVersion, setStyleVersion] = useState(0);
   const { id } = useParams<{ id: string }>();
 
   const {
@@ -95,7 +93,6 @@ const MindMapperWorkspace: React.FC = () => {
     } else {
       updateEdgeStyle(elementId, snapshot);
     }
-    setStyleVersion((v) => v + 1);
   }, [history, nodes, updateNodeStyle, updateEdgeStyle]);
 
 const handleSave = useCallback(async () => {
@@ -126,7 +123,7 @@ const handleSave = useCallback(async () => {
       >
         {selectedNode ? (
           <StyleEditor
-            key={`${selectedNode.id}:${styleVersion}`}
+            key={`${selectedNode.id}-${history.canUndo(selectedNode.id)}`}
             elementId={selectedNode.id}
             elementType="node"
             initialStyle={selectedInitialStyle}
@@ -137,7 +134,7 @@ const handleSave = useCallback(async () => {
           />
         ) : selectedEdge ? (
           <StyleEditor
-            key={`${selectedEdge.id}:${styleVersion}`}
+            key={`${selectedEdge.id}-${history.canUndo(selectedEdge.id)}`}
             elementId={selectedEdge.id}
             elementType="edge"
             initialStyle={edgeToElementStyle(selectedEdge)}
