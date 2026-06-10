@@ -39,11 +39,9 @@ const MindMapperWorkspace: React.FC = () => {
     updateNodeStyle,
     mindmapId,
     name,
-    renameMindmap
+    renameMindmap,
     updateEdgeStyle,
-    save,
-    undo,
-    canUndo,
+    save
   } = useGraphState(id);
 
   const history = useStyleHistory();
