@@ -10,6 +10,7 @@ import SideDrawer from './components/SideDrawer';
 import AddNodeForm from './components/AddNodeForm';
 import AddEdgeForm from './components/AddEdgeForm';
 import StyleEditor from './components/StyleEditor';
+import ShareDialog from './components/ShareDialog';
 import { useGraphState } from './hooks/useGraphState';
 import { useStyleHistory } from './hooks/useStyleHistory';
 import type { ElementStyle } from './hooks/useElementStyle';
@@ -22,6 +23,7 @@ const MindMapperWorkspace: React.FC = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   // Bumped on undo to force the StyleEditor to re-seed from the restored style.
   const [styleVersion, setStyleVersion] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
   const { id } = useParams<{ id: string }>();
 
   // Grab the global user data and logout function from our auth hook
@@ -38,7 +40,8 @@ const MindMapperWorkspace: React.FC = () => {
     onNodesDelete,
     onEdgesDelete,
     updateNodeStyle,
-    save
+    save,
+    mindmapId
   } = useGraphState(id);
 
   const history = useStyleHistory();
@@ -111,8 +114,19 @@ const MindMapperWorkspace: React.FC = () => {
         {/* Added a toolbar profile display to utilize user session information */}
         <div className="user-toolbar-profile" style={{ position: 'absolute', top: 10, right: 10, zIndex: 4, display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '5px 15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
           <span style={{ fontSize: '14px', fontWeight: 500 }}>{user?.username}</span>
+          <button
+            onClick={() => setShareOpen(true)}
+            disabled={!mindmapId}
+            style={{ padding: '4px 8px', fontSize: '12px', cursor: mindmapId ? 'pointer' : 'not-allowed', border: '1px solid #6366f1', borderRadius: '4px', background: '#6366f1', color: '#fff' }}
+          >
+            Share
+          </button>
           <button onClick={logout} style={{ padding: '4px 8px', fontSize: '12px', cursor: 'pointer', border: '1px solid #d1d5db', borderRadius: '4px', background: '#f9fafb' }}>Log Out</button>
         </div>
+
+        {shareOpen && mindmapId && (
+          <ShareDialog mindmapId={mindmapId} onClose={() => setShareOpen(false)} />
+        )}
 
         <ReactFlow
           nodes={nodes}

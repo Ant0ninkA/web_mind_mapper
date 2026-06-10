@@ -51,15 +51,27 @@ export async function request<T>(
   }
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : undefined;
+  // Tolerate non-JSON bodies (e.g. an HTML 404/proxy error page). Parsing must
+  // not throw before the `response.ok` check, or the real HTTP status is lost.
+  let data: unknown = undefined;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
 
   if (!response.ok) {
-    let errorMessage = response.statusText || 'Request failed';
+    let errorMessage = response.statusText
+      ? `${response.status} ${response.statusText}`
+      : `Request failed (${response.status})`;
     let errorDetails: string[] | undefined = undefined;
 
     if (data && typeof data === 'object') {
-      if ('error' in data) errorMessage = String(data.error);
-      if ('details' in data && Array.isArray(data.details)) errorDetails = data.details;
+      const obj = data as { error?: unknown; details?: unknown };
+      if (obj.error !== undefined) errorMessage = String(obj.error);
+      if (Array.isArray(obj.details)) errorDetails = obj.details as string[];
     }
 
     throw new ApiError(response.status, errorMessage, errorDetails);

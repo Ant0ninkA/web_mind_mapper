@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Mindmap } from '../api/types';
 import Button from './Button';
+import ShareDialog from './ShareDialog';
 import '../Dashboard.css';
 
 interface MindmapCardProps {
@@ -20,6 +21,7 @@ function formatUpdated(iso: string): string {
 const MindmapCard: React.FC<MindmapCardProps> = ({ mindmap, onOpen, onRename, onDelete }) => {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(mindmap.name);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const commitRename = () => {
     setEditing(false);
@@ -80,9 +82,14 @@ const MindmapCard: React.FC<MindmapCardProps> = ({ mindmap, onOpen, onRename, on
 
       <div className="mm-card__actions">
         <Button onClick={() => onOpen(mindmap.id)} variant="primary">Open</Button>
+        <Button onClick={() => setShareOpen(true)} variant="secondary">Share</Button>
         <Button onClick={startRename} variant="secondary">Rename</Button>
         <Button onClick={confirmDelete} variant="secondary">Delete</Button>
       </div>
+
+      {shareOpen && (
+        <ShareDialog mindmapId={mindmap.id} onClose={() => setShareOpen(false)} />
+      )}
     </div>
   );
 };
