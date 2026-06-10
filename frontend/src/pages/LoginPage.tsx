@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LoginForm } from '../components/LoginForm';
 import { useNavigate } from 'react-router-dom';
-import '../Auth.css';
+import '../styles/auth_styles.css';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();

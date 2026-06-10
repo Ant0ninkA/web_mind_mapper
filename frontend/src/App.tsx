@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler } from 'reactflow';
+import ReactFlow, { Background, Controls, type Node, type NodeMouseHandler, type EdgeMouseHandler} from 'reactflow';
 import 'reactflow/dist/style.css';
-import { defaultStyle, cssToElementStyle } from './hooks/useElementStyle';
-import { AuthProvider } from './api/authentication';
+import { defaultStyle, cssToElementStyle , edgeToElementStyle} from './hooks/useElementStyle';
+import { AuthProvider, useAuth } from './api/authentication';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import MapNavbar from './components/MapNavbar';
 import SideDrawer from './components/SideDrawer';
@@ -13,17 +13,19 @@ import StyleEditor from './components/StyleEditor';
 import { useGraphState } from './hooks/useGraphState';
 import { useStyleHistory } from './hooks/useStyleHistory';
 import type { ElementStyle } from './hooks/useElementStyle';
-import './App.css';
+import './styles/app_styles.css';
 
 const MindMapperWorkspace: React.FC = () => {
   const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  // Bumped on undo to force the StyleEditor to re-seed from the restored style.
-  const [styleVersion, setStyleVersion] = useState(0);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [savedStyle, setSavedStyle] = useState<ElementStyle | null>(null);
   const { id } = useParams<{ id: string }>();
 
+
+  const { user, logout } = useAuth();
   const {
     nodes,
     edges,
@@ -35,30 +37,48 @@ const MindMapperWorkspace: React.FC = () => {
     onNodesDelete,
     onEdgesDelete,
     updateNodeStyle,
-    save,
     mindmapId,
     name,
     renameMindmap
+    updateEdgeStyle,
+    save,
+    undo,
+    canUndo,
   } = useGraphState(id);
 
   const history = useStyleHistory();
 
-  // Derive the selected node from the live graph so its style stays current.
+
   const selectedNode = selectedNodeId
     ? nodes.find((n) => n.id === selectedNodeId) ?? null
+    : null;
+
+  const selectedEdge = selectedEdgeId
+    ? edges.find((e) => e.id === selectedEdgeId) ?? null
     : null;
 
   const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
     setSelectedNodeId(node.id);
     setLeftDrawerOpen(true);
+
+    setSavedStyle(cssToElementStyle(node.style, (node.data.label as string) ?? '')); 
+  }, []);
+
+  const onEdgeClick = useCallback<EdgeMouseHandler> ((event, edge) => {
+    setSelectedEdgeId(edge.id);
+    setSelectedNodeId(null);
+    setLeftDrawerOpen(true);
+
+    setSavedStyle(edgeToElementStyle(edge));
   }, []);
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setLeftDrawerOpen(false);
+    setSavedStyle(null);
   }, []);
 
-  // Live apply: every style change snapshots the node's current style (for undo),
-  // then updates the node. Persistence happens via the hook's flush-on-close.
   const handleStyleChange = useCallback((elementId: string, style: ElementStyle) => {
     const node = nodes.find((n) => n.id === elementId);
     if (node) {
@@ -67,17 +87,48 @@ const MindMapperWorkspace: React.FC = () => {
     updateNodeStyle(elementId, style);
   }, [nodes, history, updateNodeStyle]);
 
-  const handleResetStyle = useCallback((elementId: string) => {
-    updateNodeStyle(elementId, defaultStyle);
-  }, [updateNodeStyle]);
+  const handleEdgeStyleChange = useCallback((elementId: string, style: ElementStyle) => {
+  const edge = edges.find((e) => e.id === elementId);
+  
+  if (edge) {
+    history.record(elementId, edgeToElementStyle(edge));
+  }
+  updateEdgeStyle(elementId, style);
+}, [edges, history, updateEdgeStyle]);
 
-  // Undo restores the most recent style snapshot for the node.
   const handleUndoStyle = useCallback((elementId: string) => {
     const snapshot = history.undo(elementId);
     if (!snapshot) return;
+  const isNode = nodes.some((n) => n.id === elementId);
+  
+  if (isNode) {
     updateNodeStyle(elementId, snapshot);
-    setStyleVersion((v) => v + 1);
-  }, [history, updateNodeStyle]);
+  } else {
+    updateEdgeStyle(elementId, snapshot);
+  }
+  
+}, [history, nodes, updateNodeStyle, updateEdgeStyle]);
+
+const handleSave = useCallback(async () => {
+  const activeId = selectedNodeId || selectedEdgeId;
+  if (!activeId) return;
+
+  try {
+    await save();
+    history.clearStackAfterSave(activeId); 
+    
+    const currentNode = nodes.find((n) => n.id === selectedNodeId);
+    const currentEdge = edges.find((e) => e.id === selectedEdgeId);
+    
+    if (currentNode) {
+      setSavedStyle(cssToElementStyle(currentNode.style, (currentNode.data.label as string) ?? ''));
+    } else if (currentEdge) {
+      setSavedStyle(edgeToElementStyle(currentEdge));
+    }
+  } catch (error) {
+    console.error("Грешка при запис:", error);
+  }
+}, [save, selectedNodeId, selectedEdgeId, nodes, edges, history]);
 
   const selectedInitialStyle = selectedNode
     ? cssToElementStyle(selectedNode.style, (selectedNode.data.label as string) ?? '')
@@ -90,26 +141,42 @@ const MindMapperWorkspace: React.FC = () => {
       <SideDrawer
         isOpen={leftDrawerOpen}
         onToggle={() => setLeftDrawerOpen((o) => !o)}
-        title={selectedNode ? `Edit: ${selectedNode.data.label}` : 'Style Editor'}
+        title={selectedNode ? `Edit: ${selectedNode.data.label}` : selectedEdge ? 'Edit: Edge Style' : 'Style Editor'}
         side="left"
       >
         {selectedNode ? (
           <StyleEditor
-            key={`${selectedNode.id}:${styleVersion}`}
+            key={`${selectedNode.id}-${history.canUndo(selectedNode.id)}`}
             elementId={selectedNode.id}
+            elementType="node"
             initialStyle={selectedInitialStyle}
             onChange={handleStyleChange}
-            onReset={handleResetStyle}
             onUndo={handleUndoStyle}
             canUndo={history.canUndo(selectedNode.id)}
-            onSave={save}
+            onSave={handleSave}
+          />
+        ) : selectedEdge ? (
+          <StyleEditor
+            key={`${selectedEdge.id}-${history.canUndo(selectedEdge.id)}`}
+            elementId={selectedEdge.id}
+            elementType="edge"
+            initialStyle={edgeToElementStyle(selectedEdge)}
+            onChange={handleEdgeStyleChange} 
+            onUndo={handleUndoStyle}
+            canUndo={history.canUndo(selectedEdge.id)}
+            onSave={handleSave}
           />
         ) : (
-          <p style={{ padding: '20px' }}>Click a node to edit its style.</p>
+          <p style={{ padding: '20px' }}>Click a node or edge to edit its style.</p>
         )}
       </SideDrawer>
 
       <div className="graph-container" style={{ flexGrow: 1, height: '100%' }}>
+        <div className="user-toolbar-profile" style={{ position: 'absolute', top: 10, right: 10, zIndex: 4, display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '5px 15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <span style={{ fontSize: '14px', fontWeight: 500 }}>{user?.username}</span>
+          <button onClick={logout} style={{ padding: '4px 8px', fontSize: '12px', cursor: 'pointer', border: '1px solid #d1d5db', borderRadius: '4px', background: '#f9fafb' }}>Log Out</button>
+        </div>
+
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -119,6 +186,7 @@ const MindMapperWorkspace: React.FC = () => {
           onNodesDelete={onNodesDelete}
           onEdgesDelete={onEdgesDelete}
           onNodeClick={onNodeClick} 
+          onEdgeClick={onEdgeClick}
           onPaneClick={onPaneClick}
           deleteKeyCode={['Delete', 'Backspace']}
           fitView
@@ -145,9 +213,7 @@ const MindMapperWorkspace: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <ProtectedRoute>
         <MindMapperWorkspace />
-      </ProtectedRoute>
     </AuthProvider>
   );
 };

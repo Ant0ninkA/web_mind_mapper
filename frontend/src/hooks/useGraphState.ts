@@ -29,13 +29,13 @@ export function useGraphState(initialMindmapId?: string) {
   const nameRef = useRef('');
   const dirtyRef = useRef(false);
 
-  // 1. ИСТОРИЯ И ДЕБЪНС РЕФЕРЕНЦИИ ЗА СТИЛОВЕТЕ
+
   const [past, setPast] = useState<GraphSnapshot[]>([]);
   const styleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastEditedNodeRef = useRef<string | null>(null);
   const lastEditedFieldRef = useRef<string | null>(null);
 
-  // Помощна функция за дълбоко копиране на състоянието в историята
+  
   const takeSnapshot = useCallback(() => {
     setPast((p) => [
       ...p,
@@ -46,11 +46,11 @@ export function useGraphState(initialMindmapId?: string) {
     ]);
   }, []);
 
-  // 2. ФУНКЦИЯ ЗА ГЛОБАЛНО UNDO
+
   const undo = useCallback(() => {
     if (past.length === 0) return;
 
-    // Изчистваме таймерите за стилове, ако има активни в момента
+    
     if (styleTimerRef.current) clearTimeout(styleTimerRef.current);
     lastEditedNodeRef.current = null;
     lastEditedFieldRef.current = null;
@@ -58,13 +58,13 @@ export function useGraphState(initialMindmapId?: string) {
     const previousSnapshot = past[past.length - 1];
     setPast((p) => p.slice(0, -1));
 
-    // Обновяваме и стейта, и референциите
+   
     nodesRef.current = previousSnapshot.nodes;
     edgesRef.current = previousSnapshot.edges;
     setNodes(previousSnapshot.nodes);
     setEdges(previousSnapshot.edges);
     
-    dirtyRef.current = true; // Отбелязваме, че графиката е променена спрямо базата данни
+    dirtyRef.current = true; 
   }, [past]);
 
   const writeNodes = useCallback((next: Node[]) => {
@@ -80,14 +80,23 @@ export function useGraphState(initialMindmapId?: string) {
   }, []);
 
   const save = useCallback(async (): Promise<void> => {
-    const id = mindmapIdRef.current;
-    if (!id || !dirtyRef.current) return;
+    if (!dirtyRef.current) return;
     try {
-      await updateMindmap(id, {
-        name: nameRef.current,
-        nodes: toMindmapNodes(nodesRef.current),
-        edges: toMindmapEdges(edgesRef.current),
-      });
+      const id = mindmapIdRef.current;
+      if (id) {
+        await updateMindmap(id, {
+          nodes: toMindmapNodes(nodesRef.current),
+          edges: toMindmapEdges(edgesRef.current),
+        });
+      } else {
+        const mindmap = await createMindmap({
+          name: 'Untitled mindmap',
+          nodes: toMindmapNodes(nodesRef.current),
+          edges: toMindmapEdges(edgesRef.current),
+        });
+        mindmapIdRef.current = mindmap.id;
+        setMindmapId(mindmap.id);
+      }
       dirtyRef.current = false;
       setError(null);
     } catch (err) {
@@ -104,8 +113,13 @@ export function useGraphState(initialMindmapId?: string) {
       try {
         const mindmap = initialMindmapId
           ? await getMindmap(initialMindmapId)
-          : (await listMindmaps())[0] ?? (await createMindmap({ name: 'Untitled mindmap' }));
+          : (await listMindmaps())[0] ?? null;
         if (cancelled) return;
+        if (!mindmap) {
+          mindmapIdRef.current = null;
+          setMindmapId(null);
+          return;
+        }
         const flowNodes = toFlowNodes(mindmap.nodes);
         const flowEdges = toFlowEdges(mindmap.edges);
         nodesRef.current = flowNodes;
@@ -130,7 +144,6 @@ export function useGraphState(initialMindmapId?: string) {
     };
   }, [initialMindmapId]);
 
-  // Flush unsaved edits when the mindmap closes (component unmounts).
   useEffect(() => {
     return () => {
       if (dirtyRef.current && mindmapIdRef.current) {
@@ -187,7 +200,7 @@ export function useGraphState(initialMindmapId?: string) {
     [writeNodes]
   );
 
-  // 4. ИНТЕЛИГЕНТНО ОБНОВЯВАНЕ НА СТИЛА СЪС ЗАЩИТА НА ИСТОРИЯТА
+
   const updateNodeStyle = useCallback(
   (nodeId: string, style: ElementStyle) => {
     writeNodes(
@@ -204,6 +217,23 @@ export function useGraphState(initialMindmapId?: string) {
   },
   [writeNodes]
 );
+
+const updateEdgeStyle = useCallback(
+  (edgeId: string, newStyle: ElementStyle) => {
+    const nextEdges = edgesRef.current.map((edge) => {
+      if (edge.id !== edgeId)  return edge;
+      return {
+        ...edge,
+        label: newStyle.labelText || undefined,
+        animated: typeof newStyle.animated === 'boolean' ? newStyle.animated : false,
+        style: {
+          stroke: newStyle.borderColor,
+          strokeWidth: newStyle.borderWidth,
+        },
+      };
+    });
+    writeEdges(nextEdges);
+  }, [writeEdges]);
 
   const addEdgeByIds = useCallback(
     (sourceId: string, targetId: string) => {
@@ -240,13 +270,14 @@ export function useGraphState(initialMindmapId?: string) {
     onNodesDelete,
     onEdgesDelete,
     updateNodeStyle,
+    updateEdgeStyle,
     mindmapId,
     name,
     renameMindmap,
     loading,
     error,
     save,
-    undo,                // Експортираме глобалната функция
-    canUndo: past.length > 0, // Подаваме състоянието за бутона
+    undo,               
+    canUndo: past.length > 0, 
   };
 }

@@ -3,13 +3,6 @@ import type { ElementStyle } from './useElementStyle';
 
 const MAX_SNAPSHOTS = 10;
 
-/**
- * Per-node undo history for node styling. Each node id keeps its own stack of at
- * most `max` previous style snapshots; the oldest is dropped once the cap is hit.
- *
- * Usage: before applying a new style to a node, `record` the style it had; to
- * undo, `undo` pops and returns the most recent snapshot to re-apply.
- */
 export function useStyleHistory(max: number = MAX_SNAPSHOTS) {
   const [stacks, setStacks] = useState<Record<string, ElementStyle[]>>({});
 
@@ -41,5 +34,9 @@ export function useStyleHistory(max: number = MAX_SNAPSHOTS) {
     [stacks]
   );
 
-  return { record, undo, canUndo };
+  const clearStackAfterSave = useCallback((elementId: string) => {
+      setStacks((prev) => ({ ...prev, [elementId]: [] }));
+  }, []);
+
+  return { record, undo, canUndo, clearStackAfterSave };
 }

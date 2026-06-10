@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { Mindmap } from '../api/types';
 import Button from './Button';
 import ShareDialog from './ShareDialog';
-import '../Dashboard.css';
+import '../styles/dashboard_styles.css';
 
 interface MindmapCardProps {
   mindmap: Mindmap;
